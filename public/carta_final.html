@@ -949,7 +949,7 @@ const GROQ_HEADERS = {'Content-Type':'application/json', 'Authorization':`Bearer
 
 // ── GEMINI CONFIG ──
 let GEMINI_KEY = localStorage.getItem('gemini_key') || '';
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-3.0-flash';
 function geminiUrl(key){ return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`; }
 function saveGeminiKey(v){ GEMINI_KEY = v.trim(); localStorage.setItem('gemini_key', GEMINI_KEY); }
 const DIRECT = 'https://openngo.my/api/v1';

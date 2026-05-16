@@ -7,7 +7,7 @@ const vertexAI = new VertexAI({
 });
 
 const generativeModel = vertexAI.getGenerativeModel({
-  model: 'gemini-1.5-flash-001',
+  model: 'gemini-3.0-flash',
 });
 
 export async function POST(req: Request) {
