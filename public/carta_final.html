@@ -37,11 +37,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 }
 .sidebar::-webkit-scrollbar{width:0}
 .logo-wrap{padding:0 18px 20px;border-bottom:1px solid var(--border)}
-.logo-word{font-size:25px;font-weight:700;letter-spacing:-.04em;line-height:1;color:var(--text);text-decoration:none;display:inline-block;cursor:pointer}
+.logo-word{text-decoration:none;display:inline-block;cursor:pointer}
+.logo-img{height:26px;width:auto;display:block;transition:height .15s ease}
 .logo-word:hover{color:var(--blue)}
 .logo-sub{font-size:10px;color:var(--muted2);margin-top:4px;letter-spacing:.03em}
-body.dashboard-view .logo-word{font-size:34px}
-body.dashboard-view .logo-word{pointer-events:none;cursor:default;color:var(--text)}
+body.dashboard-view .logo-img{height:36px}
+body.dashboard-view .logo-word{pointer-events:none;cursor:default}
 body.dashboard-view .logo-sub{display:none}
 
 .nav-section{padding:16px 10px 0}
@@ -310,7 +311,9 @@ textarea{resize:vertical;min-height:80px}
 <!-- ── SIDEBAR ── -->
 <aside class="sidebar">
   <div class="logo-wrap">
-    <a class="logo-word" href="carta_final.html" onclick="event.preventDefault();goTo('dashboard',null)" aria-label="Go to Carta dashboard">carta</a>
+    <a class="logo-word" href="carta_final.html" onclick="event.preventDefault();goTo('dashboard',null)" aria-label="Go to Carta dashboard">
+      <img src="assets/logo.png" alt="Carta" class="logo-img">
+    </a>
     <div class="logo-sub">Ecosystem Relationship Intelligence</div>
   </div>
 
@@ -796,8 +799,12 @@ textarea{resize:vertical;min-height:80px}
 <!-- CHAT -->
 <div id="page-chat" class="page">
   <div class="ph" style="padding-bottom:0">
-    <div class="ph-top"><h2>AI Assistant</h2><span class="tag t-violet">✦ Groq Llama 3</span></div>
-    <p style="border-bottom:1px solid var(--border);padding-bottom:14px">Ask anything about the Carta ecosystem — NGOs, matches, grants, or your profile.</p>
+    <div class="ph-top"><h2>AI Assistant</h2><span class="tag t-violet">✦ Gemini AI</span></div>
+    <p style="padding-bottom:10px">Ask anything about the Carta ecosystem — NGOs, matches, grants, or your profile.</p>
+    <div id="geminiKeyBar" style="display:flex;gap:8px;align-items:center;padding-bottom:14px;border-bottom:1px solid var(--border)">
+      <input id="geminiKeyInput" type="password" placeholder="Paste Gemini API key to enable AI…" style="flex:1;font-size:12px" oninput="saveGeminiKey(this.value)">
+      <a href="https://aistudio.google.com/apikey" target="_blank" style="font-size:11px;color:var(--blue);white-space:nowrap;text-decoration:none">Get key ↗</a>
+    </div>
   </div>
   <div class="chat-msgs" id="chatMsgs">
     <div class="chat-empty" id="chatEmpty">
@@ -830,9 +837,13 @@ textarea{resize:vertical;min-height:80px}
 
   // Replace with your actual Firebase Project config!
   const firebaseConfig = {
-    apiKey: "YOUR_FIREBASE_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID"
+ apiKey: "AIzaSyD2ZBc5-U6q1TjaLd7U4QqluqoEnI9WVsA",
+  authDomain: "carta-496507.firebaseapp.com",
+  projectId: "carta-496507",
+  storageBucket: "carta-496507.firebasestorage.app",
+  messagingSenderId: "635384595912",
+  appId: "1:635384595912:web:715dff138c87a70edbecfd",
+  measurementId: "G-TT0Y9PQKKZ"
   };
 
   const firebaseConfigured = !firebaseConfig.apiKey.includes("YOUR_") && !firebaseConfig.projectId.includes("YOUR_");
@@ -935,8 +946,20 @@ textarea{resize:vertical;min-height:80px}
 const GROQ_KEY = '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';
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_HEADERS = {'Content-Type':'application/json', 'Authorization':`Bearer ${GROQ_KEY}`};
+
+// ── GEMINI CONFIG ──
+let GEMINI_KEY = localStorage.getItem('gemini_key') || '';
+const GEMINI_MODEL = 'gemini-2.0-flash';
+function geminiUrl(key){ return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`; }
+function saveGeminiKey(v){ GEMINI_KEY = v.trim(); localStorage.setItem('gemini_key', GEMINI_KEY); }
 const DIRECT = 'https://openngo.my/api/v1';
-const PROXY  = 'https://corsproxy.io/?url=https://openngo.my/api/v1';
+
+async function fetchJSON(url) {
+  try { const r=await fetch(url,{signal:AbortSignal.timeout(2500)}); if(r.ok) return await r.json(); } catch(e){}
+  try { const r=await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(6000)}); if(r.ok) return await r.json(); } catch(e){}
+  try { const r=await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(6000)}); if(r.ok) return await r.json(); } catch(e){}
+  return null;
+}
 
 async function callGroq(sys, usr, t=0.2){
   if(!GROQ_KEY) throw new Error('NO_KEY');
@@ -1150,11 +1173,7 @@ async function fetchDir(){
   const loc=document.getElementById('dirLoc').value;
   const cat=document.getElementById('dirCat').value;
   const params=new URLSearchParams({limit:ds.limit,offset:ds.offset,...(q&&{q}),...(loc&&{location:loc}),...(cat&&{category:cat})});
-  const path=`/companies?${params}`;
-  let data;
-  try{const r=await fetch(`${DIRECT}${path}`,{signal:AbortSignal.timeout(5000)});if(r.ok) data=await r.json();else throw new Error('d');}
-  catch{try{const r=await fetch(`${PROXY}${path}`,{signal:AbortSignal.timeout(7000)});if(r.ok) data=await r.json();}catch{}}
-  return data;
+  return await fetchJSON(`${DIRECT}/companies?${params}`);
 }
 async function loadDir(){
   const list=document.getElementById('dirList');
@@ -1612,7 +1631,11 @@ window.logoutCarta=logoutCarta;
 window.updateAccessUI=updateAccessUI;
 window.setAccessMode=setAccessMode;
 captureReturnTo();
+
+let _currentPage = 'dashboard';
 function goTo(id,el){
+  _currentPage = id;
+  history.replaceState(null, null, `#${id}`);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById(`page-${id}`).classList.add('active');
@@ -1623,8 +1646,14 @@ function goTo(id,el){
   if(id==='directory') loadDir();
   if(id==='registry') updateRegUI();
   if(id==='event'){renderRegistrantDatabase();renderCreatedEvents();}
+  if(id==='map' && typeof google !== 'undefined' && gmap) {
+    google.maps.event.trigger(gmap, 'resize');
+    gmap.setCenter({lat: 4.2105, lng: 101.9758});
+  }
 }
 document.querySelectorAll('.nav-item').forEach(item=>item.addEventListener('click',function(){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));this.classList.add('active');}));
+// Restore page from URL hash on load; ignore external hash changes (Maps API / Firebase SDK)
+window.addEventListener('hashchange', () => history.replaceState(null, null, `#${_currentPage}`));
 function routeFromHash(){
   if(new URLSearchParams(location.search).has('resetAccess')){
     clearAccessMode();
@@ -1643,7 +1672,6 @@ function routeFromHash(){
   }
   goTo(page, null);
 }
-window.addEventListener('hashchange', routeFromHash);
 routeFromHash();
 
 // ── TOAST ──
@@ -1667,28 +1695,39 @@ async function sendChat() {
 
   const typing = appendTypingIndicator();
   try {
-    if (!GROQ_KEY) throw new Error('NO_KEY');
-    const messages = [{role: 'system', content: CHAT_SYS}, ...chatHistory];
-    const r = await fetch(GROQ_URL, {
-      method:'POST',
-      headers:GROQ_HEADERS,
-      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:messages,temperature:0.7,max_tokens:600})
+    if (!GEMINI_KEY) throw new Error('NO_KEY');
+
+    // Build Gemini contents array from history (role 'assistant' → 'model')
+    const contents = chatHistory.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{text: m.content}]
+    }));
+
+    const r = await fetch(geminiUrl(GEMINI_KEY), {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        system_instruction: {parts: [{text: CHAT_SYS}]},
+        contents: contents,
+        generationConfig: {temperature: 0.7, maxOutputTokens: 600}
+      })
     });
+
     if (!r.ok) {
       const errText = await r.text();
-      throw new Error(`HTTP ${r.status} - ${errText}`);
+      throw new Error(`HTTP ${r.status} — ${errText}`);
     }
     const d = await r.json();
-    const reply = d.choices?.[0]?.message?.content?.trim() || 'Sorry, I could not generate a response.';
+    const reply = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'Sorry, I could not generate a response.';
     typing.remove();
     appendChatBubble('ai', reply);
     chatHistory.push({role:'assistant', content:reply});
   } catch(e) {
-    console.error("Chat error:", e);
+    console.error('Chat error:', e);
     typing.remove();
     const fb = e.message === 'NO_KEY'
-      ? 'Please set your Gemini API key in the sidebar to enable AI responses.'
-      : 'Having trouble connecting right now. Please try again in a moment.\n\nDebug: ' + e.message;
+      ? 'Paste your Gemini API key above to enable AI responses. Get one free at aistudio.google.com/apikey'
+      : 'Having trouble connecting. Please try again.\n\nDebug: ' + e.message;
     appendChatBubble('ai', fb);
   }
   btn.disabled = false;
@@ -1730,7 +1769,13 @@ function safeHtml(t) {
 }
 
 // ── INIT ──
-(async()=>{try{const r=await fetch(`${PROXY}/companies?limit=1`,{signal:AbortSignal.timeout(5000)});if(r.ok){const d=await r.json();document.getElementById('actorCount').textContent=d.count||d.total||'100+';}}catch{document.getElementById('actorCount').textContent='100+';}})();
+(async()=>{const d=await fetchJSON(`${DIRECT}/companies?limit=1`);document.getElementById('actorCount').textContent=d?(d.count||d.total||'100+'):'100+';})();
+
+// Restore saved Gemini key into input field
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('gemini_key');
+  if (saved) { const inp = document.getElementById('geminiKeyInput'); if(inp) inp.value = saved; }
+});
 </script>
 </body>
 </html>

@@ -2,13 +2,13 @@
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
-export default function DashboardPage() {
+export default function EventCreatePage() {
   return (
     <ProtectedRoute>
       <iframe 
-        src="/carta_final.html" 
+        src="/event-create.html" 
         style={{ width: '100%', height: '100vh', border: 'none', display: 'block' }} 
-        title="Carta Dashboard"
+        title="Carta Event Creation"
       />
     </ProtectedRoute>
   );
