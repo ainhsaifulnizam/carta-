@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
@@ -211,7 +212,7 @@ const STEPS: StepDef[] = [
   { id: "location", label: "Location", illustration: <PinIllustration /> },
   { id: "profile", label: "Profile Details", illustration: <BuildingIllustration /> },
   { id: "network", label: "Network", illustration: <BuildingIllustration /> },
-  { id: "context", label: "AI Context", illustration: <BuildingIllustration /> }
+  { id: "context", label: "About You", illustration: <BuildingIllustration /> }
 ];
 
 function PinIllustration() {
@@ -490,11 +491,7 @@ export default function OnboardingPage() {
       <div className="wiz-card">
         <aside className={`wiz-side ${isFirstStep ? "wiz-side-hero" : ""}`}>
           <Link href="/" className="wiz-brand">
-            <span className="wiz-brand-mark">C</span>
-            <span className="wiz-brand-text">
-              <strong>Carta</strong>
-              <em>Civic</em>
-            </span>
+            <Image src="/assets/cartalogo.png" alt="Carta" width={110} height={30} priority />
           </Link>
 
           {isFirstStep ? (
@@ -516,10 +513,10 @@ export default function OnboardingPage() {
             {isDebug ? <span className="wiz-debug-pill">Debug mode</span> : <span />}
             <div className="wiz-top-actions">
               <button type="button" className="wiz-link" onClick={applyDemoData}>
-                Prefill demo data
+                Use sample profile
               </button>
               <a className="wiz-help" href="mailto:hello@carta.app">
-                Having troubles? <strong>Get Help</strong>
+                Having trouble? <strong>Get Help</strong>
               </a>
             </div>
           </header>
@@ -842,7 +839,7 @@ export default function OnboardingPage() {
 
             {stepIndex === 4 ? (
               <div className="wiz-step">
-                <h2 className="wiz-title">AI context</h2>
+                <h2 className="wiz-title">A bit about you</h2>
                 <p className="wiz-subtitle">
                   A few sentences Carta can reuse when matching you and registering you for events.
                 </p>

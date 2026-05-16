@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
@@ -24,7 +25,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await loginWithEmail(email.trim(), password);
-      router.push("/dashboard");
+      router.push("/onboarding");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to log in.");
     } finally {
@@ -41,7 +42,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await loginWithGoogle();
-      router.push("/dashboard");
+      router.push("/onboarding");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to continue with Google.");
     } finally {
@@ -52,8 +53,8 @@ export default function LoginPage() {
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <Link href="/" className="brand">
-          Carta
+        <Link href="/" className="brand-logo">
+          <Image src="/assets/cartalogo.png" alt="Carta" width={140} height={40} priority />
         </Link>
         <h1>Welcome back</h1>
         <p>Log in to return to your civic relationship dashboard.</p>

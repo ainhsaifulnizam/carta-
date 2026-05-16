@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
@@ -29,7 +30,7 @@ function validate(form: RegisterForm) {
   if (!/^\S+@\S+\.\S+$/.test(form.email)) return "Enter a valid email address.";
   if (form.password.length < 8) return "Password must be at least 8 characters.";
   if (form.password !== form.confirmPassword) return "Passwords do not match.";
-  if (!form.acceptedTerms) return "Please accept the terms and privacy placeholder.";
+  if (!form.acceptedTerms) return "Please accept the terms and privacy policy.";
   return "";
 }
 
@@ -88,8 +89,8 @@ export default function RegisterPage() {
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <Link href="/" className="brand">
-          Carta
+        <Link href="/" className="brand-logo">
+          <Image src="/assets/cartalogo.png" alt="Carta" width={140} height={40} priority />
         </Link>
         <h1>Create your account</h1>
         <p>Build one reusable civic profile, then join future events without re-entering the same basics.</p>
@@ -129,7 +130,7 @@ export default function RegisterPage() {
 
           <label className="checkbox-row">
             <input type="checkbox" checked={form.acceptedTerms} onChange={(event) => setForm({ ...form, acceptedTerms: event.target.checked })} />
-            <span>I agree to the Carta terms and privacy placeholder.</span>
+            <span>I agree to the Carta terms and privacy policy.</span>
           </label>
 
           <button className="btn btn-primary btn-full" disabled={loading} type="submit">

@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'ai', text: string }[]>([
-    { role: 'ai', text: 'Hello! I am Tautai, your civic intelligence assistant powered by Gemini. How can I help you today?' }
+    { role: 'ai', text: 'Hi! I am your Carta assistant. How can I help you today?' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +34,7 @@ export default function Chatbot() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           contents: [
-            ...messages.filter(m => m.role !== 'ai' || m.text !== 'Hello! I am Tautai, your civic intelligence assistant powered by Gemini. How can I help you today?').map(m => ({
+            ...messages.filter(m => m.role !== 'ai' || m.text !== 'Hi! I am your Carta assistant. How can I help you today?').map(m => ({
               role: m.role === 'ai' ? 'model' : 'user',
               parts: [{ text: m.text }]
             })),
@@ -69,7 +69,7 @@ export default function Chatbot() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
-              Tautai (Gemini AI)
+              Carta Assistant
             </div>
             <button 
               onClick={() => setIsOpen(false)}

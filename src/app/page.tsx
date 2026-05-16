@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { WorldMapPanel } from "@/components/WorldMapPanel";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -25,8 +26,8 @@ export default function LandingPage() {
   return (
     <main className="public-shell">
       <nav className="top-nav">
-        <Link href="/" className="brand">
-          Carta
+        <Link href="/" className="brand-logo brand-logo--lg">
+          <Image src="/assets/cartalogo.png" alt="Carta" width={360} height={130} priority />
         </Link>
         <div className="nav-actions">
           {loading ? (

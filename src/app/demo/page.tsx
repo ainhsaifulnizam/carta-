@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 
 type CandidateCategory = "Funder" | "NGO Partner" | "Volunteer" | "Mentor" | "CSR Partner" | "Speaker";
@@ -231,16 +232,6 @@ const SAMPLE_EVENT: EventDraft = {
   needs: ["Funding", "Speakers", "Volunteers", "CSR partner", "NGO collaborators"]
 };
 
-const EMPTY_EVENT: EventDraft = {
-  title: "",
-  hostOrganisation: "",
-  format: "Hybrid",
-  location: "",
-  description: "",
-  audience: "",
-  needs: []
-};
-
 const NEED_OPTIONS = [
   "Funding",
   "Speakers",
@@ -261,6 +252,31 @@ const CATEGORY_ORDER: CandidateCategory[] = [
   "Speaker"
 ];
 
+type TourStep = { title: string; body: string };
+
+const TOUR_STEPS: TourStep[] = [
+  {
+    title: "Welcome to Carta",
+    body:
+      "We help NGOs plan events that build lasting partnerships. This walkthrough takes about 60 seconds — feel free to skip it if you'd rather poke around."
+  },
+  {
+    title: "Step 1 — Describe your event",
+    body:
+      "Give us the basics: what the event is, who it's for, and what kind of support you need. We've prefilled a sample event so you can see the flow right away."
+  },
+  {
+    title: "Step 2 — Save to get matches",
+    body:
+      "When you save your event, Carta immediately searches your ecosystem and surfaces the funders, partners, volunteers, mentors, and speakers most likely to engage."
+  },
+  {
+    title: "Step 3 — Review & take action",
+    body:
+      "Each match comes with a confidence score and a short explanation. Draft an invite or skip — your decisions train future matches over time."
+  }
+];
+
 function scoreColor(score: number) {
   if (score >= 80) return { bg: "#dcfce7", fg: "#166534", label: "Strong match" };
   if (score >= 60) return { bg: "#dbeafe", fg: "#1d4ed8", label: "Good match" };
@@ -278,6 +294,31 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+const AVATAR_INDEX_MAP: Record<string, number> = {
+  "Yee Hui Tan": 44,
+  "Sara Devi": 49,
+  "Arif Hakim": 11,
+  "Daniel Lim": 15,
+  "Aina Rahman": 23,
+  "Mei Ling Chong": 20,
+  "Amir Hisham": 68,
+  "Zara Aziz": 47,
+  "Iqbal Rashid": 33,
+  "Faridah Ahmad": 25,
+  "Nadia Yusof": 42
+};
+
+function avatarUrlFor(name: string): string | null {
+  if (AVATAR_INDEX_MAP[name]) {
+    return `https://i.pravatar.cc/200?img=${AVATAR_INDEX_MAP[name]}`;
+  }
+  return null;
+}
+
+function isPersonCandidate(c: Candidate): boolean {
+  return !!c.organisation && c.organisation !== c.name && c.organisation.trim().length > 0 && c.organisation !== "-";
+}
+
 function useIsDebug() {
   const [isDebug, setIsDebug] = useState(false);
   useEffect(() => {
@@ -287,19 +328,49 @@ function useIsDebug() {
   return isDebug;
 }
 
-export default function DemoFlowPage() {
+export default function EventCreatePage() {
   const { currentUser, loading } = useAuth();
   const isDebug = useIsDebug();
 
-  const [event, setEvent] = useState<EventDraft>(EMPTY_EVENT);
+  const [event, setEvent] = useState<EventDraft>(SAMPLE_EVENT);
   const [savedEvent, setSavedEvent] = useState<EventDraft | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState("");
-  const [usedFallback, setUsedFallback] = useState(false);
   const [activeCategory, setActiveCategory] = useState<CandidateCategory | "All">("All");
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourIndex, setTourIndex] = useState(0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSignatureRef = useRef<string>("");
 
   const showAuthGate = !loading && !currentUser && !isDebug;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const seen = window.localStorage.getItem("cartaTourSeen");
+      if (!seen) setTourOpen(true);
+    } catch {}
+  }, []);
+
+  function closeTour() {
+    setTourOpen(false);
+    try {
+      window.localStorage.setItem("cartaTourSeen", "1");
+    } catch {}
+  }
+
+  function tourNext() {
+    if (tourIndex < TOUR_STEPS.length - 1) {
+      setTourIndex((idx) => idx + 1);
+    } else {
+      closeTour();
+    }
+  }
+
+  function tourPrev() {
+    setTourIndex((idx) => Math.max(0, idx - 1));
+  }
 
   function toggleNeed(value: string) {
     setEvent((prev) =>
@@ -309,20 +380,47 @@ export default function DemoFlowPage() {
     );
   }
 
-  function prefillSample() {
+  function resetSample() {
     setEvent(SAMPLE_EVENT);
+  }
+
+  function clearForm() {
+    setEvent({
+      title: "",
+      hostOrganisation: "",
+      format: "Hybrid",
+      location: "",
+      description: "",
+      audience: "",
+      needs: []
+    });
+    setSavedEvent(null);
+    setRecommendations([]);
   }
 
   function onSaveEvent(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!event.title.trim()) return;
     setSavedEvent(event);
-    setRecommendations([]);
-    setGenerateError("");
   }
 
-  async function generateRecommendations() {
+  useEffect(() => {
     if (!savedEvent) return;
+    const signature = JSON.stringify(savedEvent);
+    if (signature === lastSignatureRef.current) return;
+    lastSignatureRef.current = signature;
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      void generateRecommendations(savedEvent);
+    }, 250);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [savedEvent]);
+
+  async function generateRecommendations(forEvent: EventDraft) {
     setGenerating(true);
     setGenerateError("");
     setRecommendations([]);
@@ -330,7 +428,7 @@ export default function DemoFlowPage() {
       const res = await fetch("/api/recommendations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event: savedEvent, candidates: CANDIDATE_POOL })
+        body: JSON.stringify({ event: forEvent, candidates: CANDIDATE_POOL })
       });
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
@@ -338,9 +436,8 @@ export default function DemoFlowPage() {
       }
       const data = await res.json();
       setRecommendations(data.recommendations || []);
-      setUsedFallback(!!data.usedFallback);
     } catch (err) {
-      setGenerateError(err instanceof Error ? err.message : "Unable to generate recommendations.");
+      setGenerateError(err instanceof Error ? err.message : "Unable to surface matches right now.");
     } finally {
       setGenerating(false);
     }
@@ -379,11 +476,21 @@ export default function DemoFlowPage() {
   return (
     <main className="demo-shell">
       <header className="demo-topbar">
-        <Link className="brand" href="/dashboard">
-          ← Carta
+        <Link className="brand-logo" href="/dashboard">
+          <Image src="/assets/cartalogo.png" alt="Carta" width={120} height={34} priority />
         </Link>
         <div className="demo-topbar-actions">
           {isDebug ? <span className="wiz-debug-pill">Debug mode</span> : null}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              setTourIndex(0);
+              setTourOpen(true);
+            }}
+          >
+            Replay tour
+          </button>
           <Link className="btn btn-secondary" href="/dashboard">
             Open dashboard
           </Link>
@@ -391,22 +498,26 @@ export default function DemoFlowPage() {
       </header>
 
       <section className="demo-hero">
-        <h1>Demo flow</h1>
+        <h1>Create an event</h1>
         <p>
-          Create an event, then ask Gemini to recommend funders, NGO partners, volunteers, mentors,
-          CSR partners, and speakers — each with a match score and reasoning.
+          Fill in your event details — Carta will instantly surface the funders, partners, volunteers,
+          mentors, and speakers most likely to engage.
         </p>
       </section>
 
       <section className="demo-step-card">
         <div className="demo-step-head">
           <div>
-            <div className="demo-step-num">Step 1</div>
-            <h2>Create your event</h2>
+            <h2>Event details</h2>
           </div>
-          <button type="button" className="btn btn-secondary" onClick={prefillSample}>
-            Use sample event
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button type="button" className="btn btn-secondary" onClick={resetSample}>
+              Use sample event
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={clearForm}>
+              Clear
+            </button>
+          </div>
         </div>
 
         <form className="form-grid" onSubmit={onSaveEvent}>
@@ -489,7 +600,7 @@ export default function DemoFlowPage() {
           </div>
           <div className="demo-actions">
             <button className="btn btn-primary" type="submit" disabled={!event.title.trim()}>
-              Save event
+              Save & find matches
             </button>
             {savedEvent ? (
               <span className="demo-saved-pill">Saved · {savedEvent.title}</span>
@@ -501,40 +612,9 @@ export default function DemoFlowPage() {
       <section className="demo-step-card">
         <div className="demo-step-head">
           <div>
-            <div className="demo-step-num">Step 2</div>
-            <h2>Generate AI recommendations</h2>
+            <h2>Recommended matches</h2>
           </div>
-          <button
-            className="btn btn-primary"
-            type="button"
-            onClick={generateRecommendations}
-            disabled={!savedEvent || generating}
-          >
-            {generating ? "Asking Gemini…" : "Generate recommendations"}
-          </button>
-        </div>
-        <p className="demo-sub">
-          Carta scores {CANDIDATE_POOL.length} ecosystem candidates against your event using Gemini, then
-          explains why each one was recommended.
-        </p>
-        {!savedEvent ? (
-          <div className="setup-note">Save an event in Step 1 to enable recommendations.</div>
-        ) : null}
-        {generateError ? <div className="error-box">{generateError}</div> : null}
-        {usedFallback && recommendations.length ? (
-          <div className="setup-note">
-            Gemini returned an unparsable response — showing heuristic-only scoring as a fallback.
-          </div>
-        ) : null}
-      </section>
-
-      {recommendations.length ? (
-        <section className="demo-step-card">
-          <div className="demo-step-head">
-            <div>
-              <div className="demo-step-num">Step 3</div>
-              <h2>Recommended matches</h2>
-            </div>
+          {recommendations.length ? (
             <div className="cat-tabs">
               <button
                 type="button"
@@ -558,15 +638,37 @@ export default function DemoFlowPage() {
                 );
               })}
             </div>
-          </div>
+          ) : null}
+        </div>
 
+        {!savedEvent ? (
+          <p className="demo-sub">Fill in your event above and Carta will line up the right people automatically.</p>
+        ) : null}
+
+        {generating ? <div className="rec-loading">Lining up the best matches…</div> : null}
+        {generateError ? <div className="error-box">{generateError}</div> : null}
+
+        {recommendations.length ? (
           <div className="rec-grid">
-            {visible.map(({ candidate, score, reasoning }) => {
+            {visible.map(({ candidate, score, reasoning }, idx) => {
               const colors = scoreColor(score);
               return (
-                <article className="rec-card" key={candidate.id}>
+                <article
+                  className="rec-card"
+                  key={candidate.id}
+                  style={{ animationDelay: `${Math.min(idx, 8) * 40}ms` }}
+                >
                   <div className="rec-head">
-                    <div className="rec-avatar">{initials(candidate.name)}</div>
+                    {isPersonCandidate(candidate) && avatarUrlFor(candidate.name) ? (
+                      <img
+                        className="rec-avatar rec-avatar-img"
+                        src={avatarUrlFor(candidate.name) || ""}
+                        alt={candidate.name}
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="rec-avatar">{initials(candidate.name)}</div>
+                    )}
                     <div className="rec-id">
                       <div className="rec-name">{candidate.name}</div>
                       <div className="rec-role">
@@ -604,9 +706,9 @@ export default function DemoFlowPage() {
                   <div className="rec-actions">
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="btn btn-primary"
                       onClick={() =>
-                        window.alert(`Invite drafted for ${candidate.name}. (Demo only — no email sent.)`)
+                        window.alert(`Invite drafted for ${candidate.name}.`)
                       }
                     >
                       Draft invite
@@ -623,7 +725,33 @@ export default function DemoFlowPage() {
               );
             })}
           </div>
-        </section>
+        ) : null}
+      </section>
+
+      {tourOpen ? (
+        <>
+          <div className="tour-overlay" onClick={closeTour} />
+          <div className="tour-card" role="dialog" aria-modal="true">
+            <div className="tour-step">Tour · Step {tourIndex + 1} of {TOUR_STEPS.length}</div>
+            <h3>{TOUR_STEPS[tourIndex].title}</h3>
+            <p>{TOUR_STEPS[tourIndex].body}</p>
+            <div className="tour-actions">
+              <button type="button" className="wiz-link" onClick={closeTour}>
+                Skip tour
+              </button>
+              <div className="tour-actions-right">
+                {tourIndex > 0 ? (
+                  <button type="button" className="btn btn-secondary" onClick={tourPrev}>
+                    Back
+                  </button>
+                ) : null}
+                <button type="button" className="btn btn-primary" onClick={tourNext}>
+                  {tourIndex === TOUR_STEPS.length - 1 ? "Get started" : "Next"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       ) : null}
     </main>
   );

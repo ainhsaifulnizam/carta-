@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -34,11 +35,11 @@ export default function ForgotPasswordPage() {
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <Link href="/" className="brand">
-          Carta
+        <Link href="/" className="brand-logo">
+          <Image src="/assets/cartalogo.png" alt="Carta" width={140} height={40} priority />
         </Link>
         <h1>Reset password</h1>
-        <p>Enter your email and Firebase will send a secure password reset link.</p>
+        <p>Enter your email and we will send a secure password reset link.</p>
 
         <form className="form-grid" onSubmit={onSubmit}>
           {error ? <div className="error-box">{error}</div> : null}
