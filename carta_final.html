@@ -282,7 +282,26 @@ textarea{resize:vertical;min-height:80px}
 .access-feature{background:rgba(255,255,255,.78);border:1px solid var(--border);border-radius:var(--r);padding:15px}
 .access-feature strong{display:block;margin-bottom:3px}
 .access-feature span{font-size:12px;color:var(--muted);line-height:1.5}
-@media(max-width:820px){.access-card{grid-template-columns:1fr}.access-side{border-left:0;border-top:1px solid var(--border)}.access-copy h1{font-size:40px}}
+.access-panel{display:none}
+.access-panel.active{display:block}
+.access-tabs{display:flex;gap:6px;background:var(--bg3);border:1px solid var(--border);padding:4px;border-radius:var(--r);margin:22px 0 18px;width:max-content}
+.access-tab{border:0;background:transparent;border-radius:8px;padding:8px 12px;font-family:var(--font);font-weight:600;color:var(--muted);cursor:pointer}
+.access-tab.active{background:var(--bg2);color:var(--text);box-shadow:var(--card-shadow)}
+.auth-form{display:grid;gap:12px;max-width:560px}
+.auth-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.radio-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.radio-card{border:1px solid var(--border);border-radius:var(--r);padding:12px;display:flex;gap:8px;align-items:flex-start;cursor:pointer;background:var(--bg2)}
+.radio-card:hover,.check-pill:hover{border-color:var(--blue3);background:var(--blue4)}
+.checkline{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--muted);line-height:1.45}
+.auth-note{border:1px solid var(--border);background:var(--bg3);border-radius:var(--r);padding:11px 12px;font-size:12px;color:var(--muted);line-height:1.5}
+.auth-error{display:none;border:1px solid #fecdd3;background:#fff1f2;color:#be123c;border-radius:var(--r);padding:10px 12px;font-size:12px}
+.auth-error.show{display:block}
+.onboarding-form{display:grid;gap:14px}
+.onboarding-section{border:1px solid var(--border);border-radius:var(--r2);padding:14px;background:var(--bg2)}
+.onboarding-section h3{font-size:14px;margin:0 0 10px}
+.onboarding-section .check-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.form-help{font-size:11px;color:var(--muted2);margin-top:4px;line-height:1.45}
+@media(max-width:820px){.access-card{grid-template-columns:1fr}.access-side{border-left:0;border-top:1px solid var(--border)}.access-copy h1{font-size:40px}.auth-row,.radio-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -335,12 +354,137 @@ textarea{resize:vertical;min-height:80px}
     <section class="access-card">
       <div class="access-copy">
         <div class="access-logo">carta</div>
-        <h1>Turn NGO events into compounding civic networks.</h1>
-        <p>Start with an account for full organiser permissions, or enter as a guest to explore the dashboard with limited demo access.</p>
-        <div class="access-actions">
-          <button class="btn btn-blue" onclick="setAccessMode('logged-in','login')">Log in</button>
-          <button class="btn btn-ghost" onclick="setAccessMode('logged-in','register')">Register</button>
-          <button class="btn btn-ghost" onclick="setAccessMode('guest','guest')">Continue as guest</button>
+        <div id="access-landing" class="access-panel active">
+          <h1>Turn NGO events into compounding civic networks.</h1>
+          <p>Start with an account for full organiser permissions, or enter as a guest to explore the dashboard with limited demo access.</p>
+          <div class="access-actions">
+            <button class="btn btn-blue" onclick="showAccessPanel('login')">Log in</button>
+            <button class="btn btn-ghost" onclick="showAccessPanel('register')">Register</button>
+            <button class="btn btn-ghost" onclick="setAccessMode('guest','guest')">Continue as guest</button>
+          </div>
+        </div>
+
+        <div id="access-login" class="access-panel">
+          <button class="btn btn-sm btn-ghost" onclick="showAccessPanel('landing')">← Back</button>
+          <h1 style="font-size:42px;margin-top:18px">Log in to Carta.</h1>
+          <p>Use your account to create events, save relationship objects, and keep profile data reusable across events.</p>
+          <form class="auth-form" onsubmit="handleLogin(event)" novalidate>
+            <div class="auth-error" id="loginError"></div>
+            <div class="field"><label>Email address *</label><input id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+            <div class="field"><label>Password *</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Your password"></div>
+            <button class="btn btn-blue" style="justify-content:center" type="submit">Log in</button>
+            <button class="btn btn-ghost" style="justify-content:center" type="button" onclick="handleGoogleAccess('login')">Continue with Google</button>
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:12px">
+              <button class="btn btn-sm btn-ghost" type="button" onclick="showAccessPanel('reset')">Forgot password?</button>
+              <button class="btn btn-sm btn-ghost" type="button" onclick="showAccessPanel('register')">Create account</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="access-reset" class="access-panel">
+          <button class="btn btn-sm btn-ghost" onclick="showAccessPanel('login')">← Back to login</button>
+          <h1 style="font-size:42px;margin-top:18px">Reset password.</h1>
+          <p>Enter your email and Carta will send the Firebase password reset email when authentication is configured.</p>
+          <form class="auth-form" onsubmit="handlePasswordReset(event)" novalidate>
+            <div class="auth-error" id="resetError"></div>
+            <div class="field"><label>Email address *</label><input id="resetEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+            <button class="btn btn-blue" style="justify-content:center" type="submit">Send reset email</button>
+          </form>
+        </div>
+
+        <div id="access-register" class="access-panel">
+          <button class="btn btn-sm btn-ghost" onclick="showAccessPanel('landing')">← Back</button>
+          <h1 style="font-size:42px;margin-top:18px">Create your account.</h1>
+          <p>Basic account data is collected once, then reused for event registration so users are not asked to retype the same information.</p>
+          <form class="auth-form" onsubmit="handleRegister(event)" novalidate>
+            <div class="auth-error" id="registerError"></div>
+            <div class="auth-row">
+              <div class="field"><label>Full name *</label><input id="regName" autocomplete="name" placeholder="Full name"></div>
+              <div class="field"><label>Email address *</label><input id="regEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+            </div>
+            <div class="auth-row">
+              <div class="field"><label>Password *</label><input id="regPassword" type="password" autocomplete="new-password" placeholder="Minimum 8 characters"></div>
+              <div class="field"><label>Confirm password *</label><input id="regConfirm" type="password" autocomplete="new-password" placeholder="Repeat password"></div>
+            </div>
+            <div class="field">
+              <label>Account type *</label>
+              <div class="radio-grid">
+                <label class="radio-card"><input type="radio" name="accountType" value="individual"> <span><strong>Individual participant</strong><br><span style="color:var(--muted);font-size:12px">For students, advocates, volunteers, researchers, mentors, and civic professionals.</span></span></label>
+                <label class="radio-card"><input type="radio" name="accountType" value="organisation"> <span><strong>Organisation representative</strong><br><span style="color:var(--muted);font-size:12px">For NGOs, funders, CSR teams, student groups, and ecosystem builders.</span></span></label>
+              </div>
+            </div>
+            <label class="checkline"><input id="regTerms" type="checkbox"> <span>I agree to the Terms of Use and Privacy Notice. *</span></label>
+            <label class="checkline"><input id="regConsent" type="checkbox"> <span>I consent to Carta using my profile information to generate event and networking recommendations.</span></label>
+            <button class="btn btn-blue" style="justify-content:center" type="submit">Create account</button>
+            <button class="btn btn-ghost" style="justify-content:center" type="button" onclick="handleGoogleAccess('register')">Continue with Google</button>
+            <div class="auth-note">Firebase Auth handles email/password, Google sign-in, email verification, login, logout, reset, and session-aware navigation. This prototype does not store passwords in Carta.</div>
+          </form>
+        </div>
+
+        <div id="access-onboarding-individual" class="access-panel">
+          <button class="btn btn-sm btn-ghost" onclick="showAccessPanel('register')">← Account details</button>
+          <h1 style="font-size:42px;margin-top:18px">Individual profile.</h1>
+          <p>Tell Carta enough to recommend relevant people, organisations, and opportunities without repeating this at every event.</p>
+          <form class="onboarding-form" onsubmit="handleOnboardingSubmit(event,'individual')" novalidate>
+            <div class="auth-error" id="individualError"></div>
+            <div class="onboarding-section">
+              <h3>Basic identity</h3>
+              <div class="auth-row">
+                <div class="field"><label>Profile display name *</label><input id="indDisplayName" placeholder="Name shown on Carta"></div>
+                <div class="field"><label>Current role *</label><select id="indRole"><option value="">Select…</option><option>Student</option><option>NGO staff</option><option>Volunteer</option><option>Activist / movement organiser</option><option>Researcher</option><option>Funder / grantmaker</option><option>CSR / corporate representative</option><option>Mentor</option><option>Mentee</option><option>Freelancer / consultant</option><option>Other</option></select></div>
+              </div>
+              <div class="auth-row">
+                <div class="field"><label>City *</label><input id="indCity" placeholder="Kuala Lumpur"></div>
+                <div class="field"><label>State *</label><input id="indState" placeholder="Selangor"></div>
+              </div>
+              <div class="field"><label>Country *</label><input id="indCountry" value="Malaysia"></div>
+              <div class="field"><label>Affiliated with an organisation?</label><select id="indAffiliated" onchange="toggleOrgAffiliation()"><option>No</option><option>Yes</option></select></div>
+              <div id="indOrgFields" style="display:none" class="auth-row">
+                <div class="field"><label>Organisation name</label><input id="indOrgName" placeholder="Organisation"></div>
+                <div class="field"><label>Job title / role</label><input id="indJobTitle" placeholder="Programme intern"></div>
+              </div>
+            </div>
+            <div class="onboarding-section"><h3>Civic interest profile</h3><div class="check-grid" data-group="indInterests"></div></div>
+            <div class="onboarding-section"><h3>Relationship intent</h3><div class="check-grid" data-group="indSeeking"></div></div>
+            <div class="onboarding-section"><h3>Contribution profile</h3><div class="check-grid" data-group="indOffering"></div></div>
+            <div class="onboarding-section">
+              <h3>Free-text AI context</h3>
+              <div class="field"><label>Tell us briefly about yourself *</label><textarea id="indContext" rows="4" placeholder="I'm a university student interested in gender equality and online harms. I'm hoping to find internships or volunteer opportunities with organisations working on youth advocacy."></textarea><div class="form-help">This becomes raw material for Gemini semantic matching later.</div></div>
+            </div>
+            <button class="btn btn-blue" style="justify-content:center" type="submit">Finish onboarding</button>
+          </form>
+        </div>
+
+        <div id="access-onboarding-organisation" class="access-panel">
+          <button class="btn btn-sm btn-ghost" onclick="showAccessPanel('register')">← Account details</button>
+          <h1 style="font-size:42px;margin-top:18px">Organisation profile.</h1>
+          <p>Give Carta the organisational context needed to surface funding, CSR, internship, collaboration, and movement-building matches.</p>
+          <form class="onboarding-form" onsubmit="handleOnboardingSubmit(event,'organisation')" novalidate>
+            <div class="auth-error" id="organisationError"></div>
+            <div class="onboarding-section">
+              <h3>Organisation identity</h3>
+              <div class="auth-row">
+                <div class="field"><label>Organisation name *</label><input id="orgName" placeholder="HerVoice Malaysia"></div>
+                <div class="field"><label>Organisation type *</label><select id="orgType"><option value="">Select…</option><option>NGO / CSO</option><option>Grassroots movement</option><option>Foundation / funder</option><option>Corporate CSR team</option><option>University / research institute</option><option>Social enterprise</option><option>Student organisation</option><option>Public-sector agency</option><option>Other</option></select></div>
+              </div>
+              <div class="auth-row">
+                <div class="field"><label>City *</label><input id="orgCity" placeholder="Petaling Jaya"></div>
+                <div class="field"><label>State *</label><input id="orgState" placeholder="Selangor"></div>
+              </div>
+              <div class="auth-row">
+                <div class="field"><label>Country *</label><input id="orgCountry" value="Malaysia"></div>
+                <div class="field"><label>Your role *</label><select id="orgRole"><option value="">Select…</option><option>Founder / director</option><option>Programme manager</option><option>Partnerships lead</option><option>Communications</option><option>Volunteer coordinator</option><option>Researcher</option><option>Other</option></select></div>
+              </div>
+            </div>
+            <div class="onboarding-section"><h3>Organisational focus</h3><div class="check-grid" data-group="orgFocus"></div></div>
+            <div class="onboarding-section"><h3>Relationship intent</h3><div class="check-grid" data-group="orgSeeking"></div></div>
+            <div class="onboarding-section"><h3>What the organisation offers</h3><div class="check-grid" data-group="orgOffering"></div></div>
+            <div class="onboarding-section">
+              <h3>Free-text AI context</h3>
+              <div class="field"><label>Briefly describe your organisation *</label><textarea id="orgContext" rows="4" placeholder="Describe current priorities and the kinds of people or organisations you want to connect with."></textarea></div>
+            </div>
+            <button class="btn btn-blue" style="justify-content:center" type="submit">Finish onboarding</button>
+          </form>
         </div>
       </div>
       <div class="access-side">
@@ -671,7 +815,7 @@ textarea{resize:vertical;min-height:80px}
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
   import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
   // Replace with your actual Firebase Project config!
@@ -681,18 +825,44 @@ textarea{resize:vertical;min-height:80px}
     projectId: "YOUR_PROJECT_ID"
   };
 
+  const firebaseConfigured = !firebaseConfig.apiKey.includes("YOUR_") && !firebaseConfig.projectId.includes("YOUR_");
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
   const provider = new GoogleAuthProvider();
 
+  window.cartaFirebaseConfigured = firebaseConfigured;
   window.signInWithGoogle = () => signInWithPopup(auth, provider).catch(console.error);
-  window.signOutUser = () => signOut(auth).finally(()=>{window.clearAccessMode?.();goTo('access',null);});
+  window.cartaGoogleAuth = async () => {
+    if(!firebaseConfigured) return { demo: true };
+    return signInWithPopup(auth, provider);
+  };
+  window.cartaCreateEmailAccount = async ({name,email,password}) => {
+    if(!firebaseConfigured) return { demo: true };
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    if(name) await updateProfile(credential.user, { displayName: name });
+    await sendEmailVerification(credential.user);
+    return credential;
+  };
+  window.cartaLoginEmail = async ({email,password}) => {
+    if(!firebaseConfigured) return { demo: true };
+    return signInWithEmailAndPassword(auth, email, password);
+  };
+  window.cartaResetPassword = async (email) => {
+    if(!firebaseConfigured) return { demo: true };
+    return sendPasswordResetEmail(auth, email);
+  };
+  window.cartaFirebaseLogout = async () => {
+    if(!firebaseConfigured || !auth.currentUser) return;
+    return signOut(auth);
+  };
+  window.signOutUser = () => window.logoutCarta?.();
 
   onAuthStateChanged(auth, (user) => {
     const userChip = document.getElementById('user-chip-auth');
     if (user) {
-      userChip.innerHTML = `<img src="${user.photoURL}" style="width:32px;height:32px;border-radius:50%"><div><div class="user-name">${user.displayName}</div><div class="user-role" style="cursor:pointer;color:var(--rose)" onclick="signOutUser()">Sign Out</div></div>`;
+      setStoredAccessMode('logged-in','firebase');
+      userChip.innerHTML = `<img src="${user.photoURL}" style="width:32px;height:32px;border-radius:50%"><div><div class="user-name">${user.displayName||user.email||'Carta User'}</div><div class="user-role" style="cursor:pointer;color:var(--rose)" onclick="logoutCarta()">Logged-in permissions · Logout</div></div>`;
       window.loadRegistryFromFirebase();
     } else {
       if(window.updateAccessUI && window.getAccessMode?.()) window.updateAccessUI();
@@ -960,6 +1130,155 @@ async function doPromptSearch(){
 function mockProfile(f){return{summary:`${f.name} is a ${f.loc}-based civil society organisation focused on community advocacy. They actively serve local communities and seek to expand their ecosystem of partners.`,actor_type:'ngo',focus_areas:['community_development','advocacy'],seeking:f.seeking,offering:['community_access','expertise'],ecosystem_value:`${f.name} brings direct community access and lived expertise — a critical complement to institutional actors.`};}
 function mockMatches(seeking){const all=[{target_name:'Telco Foundation Malaysia',target_id:'org_telco',match_type:'csr_partnership',confidence:.87,rationale:'Telco Foundation has a RM 2M digital inclusion mandate that directly aligns with your community focus. They actively seek NGO implementation partners in your geography.',suggested_next_step:'Request an introductory meeting with their CSR team.'},{target_name:'Women\'s Aid Organisation',target_id:'org_wao',match_type:'knowledge_sharing',confidence:.82,rationale:'WAO\'s deep expertise in gender advocacy complements your community access. A knowledge-sharing partnership could strengthen both organisations\' programme quality.',suggested_next_step:'Propose a joint training session between your facilitator teams.'},{target_name:'Youth Civic Lab',target_id:'org_youthcivic',match_type:'collaboration',confidence:.74,rationale:'Youth Civic Lab\'s civic technology tools align with your community-facing work. A collaboration could extend your digital programme capacity without duplicating effort.',suggested_next_step:'Explore co-hosting a youth digital safety event.'}];if(seeking.includes('interns'))all.unshift({target_name:'HerVoice Malaysia',target_id:'org_hervoice',match_type:'internship_host',confidence:.91,rationale:'HerVoice Malaysia has an active intern programme and shares your gender equality and youth focus. Both organisations benefit — HerVoice gains support, you gain a structured internship pathway.',suggested_next_step:'Connect your programme manager with Aina at HerVoice.'});return all.slice(0,3);}
 
+// ── ACCESS + AUTH FLOW ──
+const civicIssues=['Gender equality','Youth empowerment','Digital rights / online safety','Climate / environment','Education','Disability inclusion','Labour rights','Migrant / refugee rights','Mental health','Community development','Civic technology','Democracy / governance','Other'];
+const individualSeeking=['Internship','Mentorship','Funding','CSR partners','NGO collaborators','Movement-building opportunities','Research collaborations','Volunteer roles','Speaking opportunities','Hiring/recruitment','General networking'];
+const individualOffering=['Research support','Content creation','Community organising','Event support','Funding','Mentorship','Internship opportunities','Technical tools','Training/facilitation','Advocacy/campaign support','Local knowledge / community access','Other'];
+const orgSeeking=['Funding','CSR partnerships','Interns','Volunteers','Mentors / expert advisors','Research collaborators','Campaign partners','Local implementing partners','Event co-hosts','Grant applicants / grantees','General network expansion'];
+const orgOffering=['Funding','Internship openings','Volunteer placements','Training','Community access','Research/data','Campaign collaboration','Venue/event partnership','Technical tools','Mentorship','Other'];
+let pendingAccountType=null;
+
+function renderCheckGroup(group,items){
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(el=>{
+    el.innerHTML=items.map(item=>`<label class="check-pill"><input type="checkbox" value="${item}"> ${item}</label>`).join('');
+  });
+}
+function initAccessForms(){
+  renderCheckGroup('indInterests',civicIssues);
+  renderCheckGroup('indSeeking',individualSeeking);
+  renderCheckGroup('indOffering',individualOffering);
+  renderCheckGroup('orgFocus',civicIssues);
+  renderCheckGroup('orgSeeking',orgSeeking);
+  renderCheckGroup('orgOffering',orgOffering);
+}
+function showAccessPanel(name){
+  document.querySelectorAll('.access-panel').forEach(panel=>panel.classList.remove('active'));
+  const panel=document.getElementById(`access-${name}`);
+  if(panel) panel.classList.add('active');
+  document.querySelectorAll('.auth-error').forEach(el=>{el.classList.remove('show');el.textContent='';});
+}
+function setAuthError(id,message){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.textContent=message;
+  el.classList.add('show');
+}
+function validEmail(email){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);}
+function authMessage(error){
+  const code=error?.code||'';
+  if(code.includes('wrong-password')||code.includes('invalid-credential')) return 'Wrong password or account credentials. Please try again.';
+  if(code.includes('email-already-in-use')) return 'An account with this email already exists. Try logging in instead.';
+  if(code.includes('weak-password')) return 'Password is too weak. Use at least 8 characters.';
+  if(code.includes('invalid-email')) return 'Please enter a valid email address.';
+  if(code.includes('popup')) return 'Google sign-in was not completed.';
+  return error?.message || 'Something went wrong. Please try again.';
+}
+function getSelectedAccountType(){
+  return document.querySelector('input[name="accountType"]:checked')?.value || '';
+}
+function collectChecked(group){
+  return [...document.querySelectorAll(`[data-group="${group}"] input:checked`)].map(input=>input.value);
+}
+function storeProfile(key,value){
+  try{sessionStorage.setItem(key,JSON.stringify(value));}catch{}
+}
+function getStoredProfile(key){
+  try{return JSON.parse(sessionStorage.getItem(key)||'{}');}catch{return {};}
+}
+function handleRegister(event){
+  event.preventDefault();
+  const name=document.getElementById('regName').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const password=document.getElementById('regPassword').value;
+  const confirm=document.getElementById('regConfirm').value;
+  const accountType=getSelectedAccountType();
+  const terms=document.getElementById('regTerms').checked;
+  const consent=document.getElementById('regConsent').checked;
+  if(!name||!email||!password||!confirm||!accountType) return setAuthError('registerError','Please complete all required account creation fields.');
+  if(!validEmail(email)) return setAuthError('registerError','Please enter a valid email address.');
+  if(password.length<8) return setAuthError('registerError','Password must be at least 8 characters.');
+  if(password!==confirm) return setAuthError('registerError','Password and confirmation do not match.');
+  if(!terms) return setAuthError('registerError','You must agree to the Terms of Use and Privacy Notice.');
+  pendingAccountType=accountType;
+  const account={name,email,accountType,consentToRecommendations:consent,emailVerified:false};
+  Promise.resolve(window.cartaCreateEmailAccount?.({name,email,password}))
+    .then(()=>{storeProfile('cartaAccount',account);showToast('Account created','Email verification has been triggered. Complete onboarding to enter Carta.');showAccessPanel(`onboarding-${accountType}`);prefillOnboardingName(name);})
+    .catch(error=>setAuthError('registerError',authMessage(error)));
+}
+function handleLogin(event){
+  event.preventDefault();
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  if(!email||!password) return setAuthError('loginError','Email and password are required.');
+  if(!validEmail(email)) return setAuthError('loginError','Please enter a valid email address.');
+  Promise.resolve(window.cartaLoginEmail?.({email,password}))
+    .then(()=>{storeProfile('cartaAccount',{email,accountType:'individual'});setAccessMode('logged-in','login');})
+    .catch(error=>setAuthError('loginError',authMessage(error)));
+}
+function handlePasswordReset(event){
+  event.preventDefault();
+  const email=document.getElementById('resetEmail').value.trim();
+  if(!email) return setAuthError('resetError','Email is required.');
+  if(!validEmail(email)) return setAuthError('resetError','Please enter a valid email address.');
+  Promise.resolve(window.cartaResetPassword?.(email))
+    .then(()=>{setAuthError('resetError',window.cartaFirebaseConfigured?'Password reset email sent.':'Demo mode: Firebase config is still placeholder, but this is where the reset email is sent.');document.getElementById('resetError').style.color='var(--green)';document.getElementById('resetError').style.background='#ecfdf5';document.getElementById('resetError').style.borderColor='#bbf7d0';})
+    .catch(error=>setAuthError('resetError',authMessage(error)));
+}
+function handleGoogleAccess(source){
+  if(source==='register'){
+    const accountType=getSelectedAccountType();
+    if(!accountType) return setAuthError('registerError','Choose an account type before continuing with Google sign-in.');
+    pendingAccountType=accountType;
+  }
+  Promise.resolve(window.cartaGoogleAuth?.())
+    .then(result=>{
+      const user=result?.user||{};
+      if(source==='register'){
+        storeProfile('cartaAccount',{name:user.displayName||'Google user',email:user.email||'',accountType:pendingAccountType,emailVerified:true});
+        showAccessPanel(`onboarding-${pendingAccountType}`);
+        prefillOnboardingName(user.displayName||'');
+      }else{
+        storeProfile('cartaAccount',{name:user.displayName||'Google user',email:user.email||'',accountType:'individual',emailVerified:true});
+        setAccessMode('logged-in','google');
+      }
+    })
+    .catch(error=>setAuthError(source==='register'?'registerError':'loginError',authMessage(error)));
+}
+function prefillOnboardingName(name){
+  if(name && document.getElementById('indDisplayName')) document.getElementById('indDisplayName').value=name;
+}
+function toggleOrgAffiliation(){
+  document.getElementById('indOrgFields').style.display=document.getElementById('indAffiliated').value==='Yes'?'grid':'none';
+}
+function handleOnboardingSubmit(event,type){
+  event.preventDefault();
+  const account=getStoredProfile('cartaAccount');
+  let profile;
+  if(type==='individual'){
+    const required=['indDisplayName','indRole','indCity','indState','indCountry','indContext'];
+    if(required.some(id=>!document.getElementById(id).value.trim())) return setAuthError('individualError','Please complete the required identity and AI context fields.');
+    profile={type,displayName:document.getElementById('indDisplayName').value.trim(),role:document.getElementById('indRole').value,location:{city:document.getElementById('indCity').value.trim(),state:document.getElementById('indState').value.trim(),country:document.getElementById('indCountry').value.trim()},affiliated:document.getElementById('indAffiliated').value,organisationName:document.getElementById('indOrgName').value.trim(),jobTitle:document.getElementById('indJobTitle').value.trim(),interests:collectChecked('indInterests'),seeking:collectChecked('indSeeking'),offering:collectChecked('indOffering'),aiContext:document.getElementById('indContext').value.trim()};
+  }else{
+    const required=['orgName','orgType','orgCity','orgState','orgCountry','orgRole','orgContext'];
+    if(required.some(id=>!document.getElementById(id).value.trim())) return setAuthError('organisationError','Please complete the required organisation identity and AI context fields.');
+    profile={type,organisationName:document.getElementById('orgName').value.trim(),organisationType:document.getElementById('orgType').value,location:{city:document.getElementById('orgCity').value.trim(),state:document.getElementById('orgState').value.trim(),country:document.getElementById('orgCountry').value.trim()},role:document.getElementById('orgRole').value,focus:collectChecked('orgFocus'),seeking:collectChecked('orgSeeking'),offering:collectChecked('orgOffering'),aiContext:document.getElementById('orgContext').value.trim()};
+  }
+  storeProfile('cartaProfile',{...account,...profile,onboardingCompleted:true});
+  setAccessMode('logged-in','onboarding');
+  showToast('Onboarding complete','Carta will reuse this profile for event registration and networking recommendations.');
+}
+function logoutCarta(){
+  Promise.resolve(window.cartaFirebaseLogout?.()).finally(()=>{
+    clearAccessMode();
+    storeProfile('cartaAccount',{});
+    storeProfile('cartaProfile',{});
+    goTo('access',null);
+    showAccessPanel('landing');
+    showToast('Logged out','You are back at the Carta access page.');
+  });
+}
+initAccessForms();
+
 // ── NAV ──
 function getAccessMode(){
   try{return localStorage.getItem('cartaAccessMode');}
@@ -983,10 +1302,13 @@ function updateAccessUI(){
   const dashboardCopy=document.getElementById('dashboardAccessCopy');
   if(!userChip || !dashboardCopy) return;
   if(mode==='logged-in'){
-    userChip.innerHTML=`<div class="user-av">A</div><div><div class="user-name">Pocket of Pink</div><div class="user-role" style="color:var(--green)">Logged-in permissions</div></div>`;
+    const profile=getStoredProfile('cartaProfile');
+    const account=getStoredProfile('cartaAccount');
+    const label=profile.displayName||profile.organisationName||account.name||'Carta User';
+    userChip.innerHTML=`<div class="user-av">${label.slice(0,1).toUpperCase()}</div><div><div class="user-name">${label}</div><div class="user-role" style="cursor:pointer;color:var(--green)" onclick="logoutCarta()">Logged-in permissions · Logout</div></div>`;
     dashboardCopy.textContent='Logged-in workspace · Youth Digital Safety Roundtable 2026 · full organiser permissions';
   }else if(mode==='guest'){
-    userChip.innerHTML=`<div class="user-av">?</div><div><div class="user-name">Guest User</div><div class="user-role" style="color:var(--muted)">Guest permissions</div></div>`;
+    userChip.innerHTML=`<div class="user-av">?</div><div><div class="user-name">Guest User</div><div class="user-role" style="cursor:pointer;color:var(--muted)" onclick="logoutCarta()">Guest permissions · Logout</div></div>`;
     dashboardCopy.textContent='Guest workspace · demo access only · sign in to save events and relationships';
   }
 }
@@ -999,6 +1321,7 @@ function setAccessMode(mode,source){
 }
 window.getAccessMode=getAccessMode;
 window.clearAccessMode=clearAccessMode;
+window.logoutCarta=logoutCarta;
 window.updateAccessUI=updateAccessUI;
 window.setAccessMode=setAccessMode;
 function goTo(id,el){
