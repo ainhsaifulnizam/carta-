@@ -1,10 +1,7 @@
-import { VertexAI } from "@google-cloud/vertexai";
 import { NextResponse } from "next/server";
+import { getVertexAI } from "@/lib/vertex";
 
-const vertexAI = new VertexAI({
-  project: "carta-496507",
-  location: "us-central1"
-});
+const vertexAI = getVertexAI();
 
 type EnrichmentRequest = {
   name: string;

@@ -1,12 +1,7 @@
-import { VertexAI } from "@google-cloud/vertexai";
 import { NextResponse } from "next/server";
+import { getVertexAI } from "@/lib/vertex";
 
-const vertexAI = new VertexAI({
-  project: "carta-496507",
-  location: "us-central1"
-});
-
-const generativeModel = vertexAI.getGenerativeModel({
+const generativeModel = getVertexAI().getGenerativeModel({
   model: "gemini-2.5-flash-lite"
 });
 
