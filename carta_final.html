@@ -633,17 +633,20 @@ textarea{resize:vertical;min-height:80px}
 
 <script>
 // ── CONFIG ──
-let GEMINI_KEY = 'AIzaSyC9Khm8yjBwQQkbQS87XutuZ1Gh3T6PPs8';
-const GEMINI_URL = k => `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${k}`;
+let GEMINI_KEY = localStorage.getItem('carta_gemini_key') || '';
+const GEMINI_URL = k => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${k}`;
 const DIRECT = 'https://openngo.my/api/v1';
 const PROXY  = 'https://corsproxy.io/?url=https://openngo.my/api/v1';
 
 function updateKey(v){
   GEMINI_KEY = v.trim();
+  localStorage.setItem('carta_gemini_key', GEMINI_KEY);
   const b = document.getElementById('keyBadge');
   if(GEMINI_KEY.length > 10){b.textContent='Key set ✓';b.className='key-badge key-set';}
   else{b.textContent='No key';b.className='key-badge key-unset';}
 }
+// Restore saved key on load
+(function(){const saved=localStorage.getItem('carta_gemini_key');if(saved){const inp=document.getElementById('apiKeyInput');if(inp)inp.value=saved;updateKey(saved);}})();
 
 async function callGemini(sys, usr, t=0.2){
   if(!GEMINI_KEY) throw new Error('NO_KEY');
