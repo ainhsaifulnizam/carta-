@@ -6,27 +6,26 @@ const vertexAI = new VertexAI({
   location: 'us-central1',
 });
 
-// Use gemini-1.5-flash for general chat
 const generativeModel = vertexAI.getGenerativeModel({
   model: 'gemini-1.5-flash-001',
 });
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
+    const body = await req.json();
+    const { contents, system_instruction } = body;
     
-    if (!message) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+    if (!contents || !Array.isArray(contents)) {
+      return NextResponse.json({ error: 'Contents array is required' }, { status: 400 });
     }
 
-    const request = {
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: message }]
-        }
-      ]
+    const request: any = {
+      contents: contents,
     };
+
+    if (system_instruction) {
+      request.systemInstruction = system_instruction;
+    }
     
     const result = await generativeModel.generateContent(request);
     
@@ -42,3 +41,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

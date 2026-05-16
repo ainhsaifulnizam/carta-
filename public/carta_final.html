@@ -801,10 +801,6 @@ textarea{resize:vertical;min-height:80px}
   <div class="ph" style="padding-bottom:0">
     <div class="ph-top"><h2>AI Assistant</h2><span class="tag t-violet">✦ Gemini AI</span></div>
     <p style="padding-bottom:10px">Ask anything about the Carta ecosystem — NGOs, matches, grants, or your profile.</p>
-    <div id="geminiKeyBar" style="display:flex;gap:8px;align-items:center;padding-bottom:14px;border-bottom:1px solid var(--border)">
-      <input id="geminiKeyInput" type="password" placeholder="Paste Gemini API key to enable AI…" style="flex:1;font-size:12px" oninput="saveGeminiKey(this.value)">
-      <a href="https://aistudio.google.com/apikey" target="_blank" style="font-size:11px;color:var(--blue);white-space:nowrap;text-decoration:none">Get key ↗</a>
-    </div>
   </div>
   <div class="chat-msgs" id="chatMsgs">
     <div class="chat-empty" id="chatEmpty">
@@ -1695,21 +1691,17 @@ async function sendChat() {
 
   const typing = appendTypingIndicator();
   try {
-    if (!GEMINI_KEY) throw new Error('NO_KEY');
-
-    // Build Gemini contents array from history (role 'assistant' → 'model')
     const contents = chatHistory.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{text: m.content}]
     }));
 
-    const r = await fetch(geminiUrl(GEMINI_KEY), {
+    const r = await fetch('/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         system_instruction: {parts: [{text: CHAT_SYS}]},
-        contents: contents,
-        generationConfig: {temperature: 0.7, maxOutputTokens: 600}
+        contents: contents
       })
     });
 
@@ -1718,16 +1710,16 @@ async function sendChat() {
       throw new Error(`HTTP ${r.status} — ${errText}`);
     }
     const d = await r.json();
-    const reply = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'Sorry, I could not generate a response.';
+    if (d.error) throw new Error(d.error);
+    const reply = d.response || 'Sorry, I could not generate a response.';
+    
     typing.remove();
     appendChatBubble('ai', reply);
     chatHistory.push({role:'assistant', content:reply});
   } catch(e) {
     console.error('Chat error:', e);
     typing.remove();
-    const fb = e.message === 'NO_KEY'
-      ? 'Paste your Gemini API key above to enable AI responses. Get one free at aistudio.google.com/apikey'
-      : 'Having trouble connecting. Please try again.\n\nDebug: ' + e.message;
+    const fb = 'Having trouble connecting. Please try again.\n\nDebug: ' + e.message;
     appendChatBubble('ai', fb);
   }
   btn.disabled = false;
@@ -1771,11 +1763,7 @@ function safeHtml(t) {
 // ── INIT ──
 (async()=>{const d=await fetchJSON(`${DIRECT}/companies?limit=1`);document.getElementById('actorCount').textContent=d?(d.count||d.total||'100+'):'100+';})();
 
-// Restore saved Gemini key into input field
-window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('gemini_key');
-  if (saved) { const inp = document.getElementById('geminiKeyInput'); if(inp) inp.value = saved; }
-});
+// Removed Gemini key restore logic
 </script>
 </body>
 </html>

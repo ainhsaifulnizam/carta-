@@ -32,7 +32,15 @@ export default function Chatbot() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg }),
+        body: JSON.stringify({ 
+          contents: [
+            ...messages.filter(m => m.role !== 'ai' || m.text !== 'Hello! I am Tautai, your civic intelligence assistant powered by Gemini. How can I help you today?').map(m => ({
+              role: m.role === 'ai' ? 'model' : 'user',
+              parts: [{ text: m.text }]
+            })),
+            { role: 'user', parts: [{ text: userMsg }] }
+          ]
+        }),
       });
       
       const data = await res.json();
