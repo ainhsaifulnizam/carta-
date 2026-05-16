@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carta - Create Event</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Outfit+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fb;--surface:#ffffff;--surface2:#f8fafc;--surface3:#eef3fb;
+  --border:#e2e7f0;--border2:#cbd5e1;
+  --text:#0f172a;--muted:#64748b;--muted2:#94a3b8;
+  --blue:#2563eb;--blue2:#1d4ed8;--blue3:#dbeafe;--green:#10b981;
+  --amber:#f59e0b;--rose:#f43f5e;--violet:#7c6af5;
+  --shadow:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --shadow2:0 12px 36px rgba(15,23,42,.09);
+  --r:12px;--r2:8px;--font:'Outfit',sans-serif;--mono:'Outfit Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+button,input,textarea,select{font:inherit}
+.app{display:grid;grid-template-columns:240px 1fr;height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 0;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.logo-wrap{padding:0 18px 20px;border-bottom:1px solid var(--border)}
+.logo-word{font-size:25px;font-weight:700;letter-spacing:-.04em;line-height:1;color:var(--text);text-decoration:none;display:inline-block}
+.logo-word:hover{color:var(--blue)}
+.logo-sub{font-size:10px;color:var(--muted2);margin-top:4px;letter-spacing:.03em}
+.nav-section{padding:16px 10px 0}
+.nav-label{font-size:10px;font-weight:600;color:var(--muted2);letter-spacing:.08em;text-transform:uppercase;padding:0 8px 6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r2);cursor:pointer;color:var(--muted);font-size:13px;font-weight:400;transition:all .12s;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:var(--surface3);color:var(--text)}
+.nav-item.active{background:#eff6ff;color:var(--blue);font-weight:500}
+.nav-icon{font-size:15px;width:18px;text-align:center;opacity:.8}
+.nav-badge{margin-left:auto;font-size:10px;font-weight:600;padding:1px 7px;border-radius:10px;background:var(--blue);color:#fff;min-width:20px;text-align:center}
+.nav-badge.green{background:var(--green)}
+.nav-badge.amber{background:var(--amber)}
+.nav-badge.rose{background:var(--rose)}
+.sidebar-footer{margin-top:auto;padding:14px 16px;border-top:1px solid var(--border)}
+.user-chip{display:flex;align-items:center;gap:9px}
+.user-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--violet));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-weight:500}
+.user-role{font-size:10px;color:var(--muted2)}
+.main{overflow-y:auto;background:var(--bg)}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.shell{max-width:1240px;margin:0 auto;padding:26px 28px 44px;display:grid;grid-template-columns:minmax(340px,430px) minmax(0,1fr);gap:24px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+.map-card{padding:18px}
+.map-preview{height:390px;border-radius:10px;background:linear-gradient(180deg,#f8fbff,#eef5ff);border:1px solid var(--border);position:relative;overflow:hidden}
+.map-preview svg{position:absolute;inset:0;width:100%;height:100%}
+.map-caption{position:absolute;left:20px;bottom:18px;right:20px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.map-title{font-size:24px;font-weight:700;letter-spacing:-.03em;color:#1e3a5f}.map-title span{display:block;color:var(--muted);font-size:13px;font-weight:500;letter-spacing:0;margin-top:2px}
+.map-pin{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:7px 11px;color:var(--muted);font-weight:600;box-shadow:var(--shadow)}
+.preview-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.btn{height:42px;border-radius:var(--r2);border:1px solid var(--border);background:var(--surface);color:var(--muted);font-weight:650;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn:hover{border-color:var(--border2);color:var(--text)}
+.btn.primary{height:58px;background:var(--blue);border-color:var(--blue);color:white;font-size:17px;box-shadow:0 8px 20px rgba(37,99,235,.18)}
+.btn.primary:hover{background:var(--blue2)}
+.btn.green{background:#ecfdf5;border-color:#a7f3d0;color:#047857}
+.form{padding:22px}
+.form-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px}
+.crumb{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}.title{font-size:36px;line-height:1.05;font-weight:700;letter-spacing:-.04em}
+.subtitle{font-size:14px;color:var(--muted);margin-top:8px;max-width:620px}
+.calendar-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface2);border-radius:999px;padding:8px 12px;color:var(--muted);font-weight:650;white-space:nowrap}
+.section{padding:18px 0;border-top:1px solid var(--border)}
+.section:first-of-type{border-top:0;padding-top:0}
+.section-title{font-size:14px;font-weight:700;margin-bottom:12px;color:#243045}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:12px}
+label{display:block;font-size:12px;font-weight:650;color:var(--muted);margin-bottom:6px}
+input,textarea,select{width:100%;border:1px solid var(--border);background:var(--surface);border-radius:var(--r2);padding:10px 12px;color:var(--text);outline:none}
+textarea{min-height:92px;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+input::placeholder,textarea::placeholder{color:var(--muted2)}
+.time-card{display:grid;grid-template-columns:1fr 1fr 150px;gap:10px}
+.option-list{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.option-row{min-height:58px;display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--border)}
+.option-row:last-child{border-bottom:0}.option-icon{width:34px;height:34px;border-radius:9px;background:var(--surface3);display:grid;place-items:center;color:var(--blue);font-weight:700}.option-body{flex:1}
+.option-name{font-weight:700}.option-note{font-size:12px;color:var(--muted)}.option-value{color:var(--muted);font-weight:650}
+.toggle{width:46px;height:28px;border-radius:999px;background:#dbe3ef;padding:3px;display:flex;justify-content:flex-start}.toggle.on{background:#a7f3d0;justify-content:flex-end}.knob{width:22px;height:22px;border-radius:50%;background:white;box-shadow:var(--shadow)}
+.calendar-box{border:1px solid var(--blue3);background:#eff6ff;border-radius:var(--r);padding:15px}
+.calendar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}.calendar-title{display:flex;align-items:center;gap:10px;font-weight:750;font-size:16px}.gcal{width:34px;height:34px;border-radius:9px;background:white;display:grid;place-items:center;color:#4285f4;font-weight:800;border:1px solid var(--blue3)}
+.tag{display:inline-flex;align-items:center;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700;background:white;color:var(--blue);border:1px solid var(--blue3)}
+.calendar-box p{color:#1e40af;font-size:13px;line-height:1.6}.calendar-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.calendar-actions .btn{height:38px;background:white;color:var(--blue);border-color:var(--blue3)}
+.question-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.q-card{border:1px solid var(--border);border-radius:var(--r2);padding:12px;background:var(--surface2);min-height:74px}
+.q-card strong{display:block;margin-bottom:3px}.q-card span{font-size:12px;color:var(--muted)}.q-card.off{opacity:.55}
+.custom-q{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:12px}.custom-q .btn{padding:0 14px}
+.footer-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;padding-top:18px;border-top:1px solid var(--border)}
+.toast{position:fixed;right:24px;bottom:24px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow2);max-width:390px;transform:translateY(140%);transition:.2s;z-index:20}
+.toast.show{transform:translateY(0)}.toast strong{display:block;margin-bottom:3px}.toast span{color:var(--muted)}
+@media(max-width:980px){html,body{overflow:auto;height:auto}.app{display:block;height:auto}.sidebar{position:relative}.shell{grid-template-columns:1fr;padding:18px}.field-grid,.time-card,.question-grid,.custom-q{grid-template-columns:1fr}.map-preview{height:290px}.title{font-size:30px}.form-head{flex-direction:column}.footer-actions{flex-direction:column}.footer-actions .btn{width:100%}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo-wrap">
+    <a class="logo-word" href="carta_final.html" aria-label="Go to Carta home">carta</a>
+    <div class="logo-sub">Ecosystem Relationship Intelligence</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <a class="nav-item" href="carta_final.html#dashboard"><span class="nav-icon">⊞</span> Dashboard</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Demo flow</div>
+    <a class="nav-item active" href="event-create.html"><span class="nav-icon">□</span> Create event <span class="nav-badge green">New</span></a>
+    <a class="nav-item" href="carta_final.html#onboard"><span class="nav-icon">✦</span> NGO onboarding <span class="nav-badge">Live</span></a>
+    <a class="nav-item" href="carta_final.html#participant"><span class="nav-icon">◎</span> Participant view</a>
+    <a class="nav-item" href="carta_final.html#event"><span class="nav-icon">◈</span> Event console</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Ecosystem</div>
+    <a class="nav-item" href="carta_final.html#map"><span class="nav-icon">◎</span> Civic map</a>
+    <a class="nav-item" href="carta_final.html#registry"><span class="nav-icon">▦</span> Registry <span class="nav-badge amber">0</span></a>
+    <a class="nav-item" href="carta_final.html#directory"><span class="nav-icon">◈</span> NGO directory</a>
+    <a class="nav-item" href="carta_final.html#grants"><span class="nav-icon">◆</span> Grant radar <span class="nav-badge rose">5</span></a>
+    <a class="nav-item" href="carta_final.html#chat"><span class="nav-icon">◉</span> AI Assistant <span class="nav-badge" style="background:var(--violet)">AI</span></a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-av">A</div>
+      <div>
+        <div class="user-name">Pocket of Pink</div>
+        <div class="user-role">Programme Manager</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+<div class="shell">
+  <aside class="panel map-card">
+    <div class="map-preview" aria-label="Default world map outline event image">
+      <svg viewBox="0 0 900 560" role="img" aria-label="World map outline">
+        <defs>
+          <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+            <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#dbe6f4" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <rect width="900" height="560" fill="url(#grid)"/>
+        <g fill="none" stroke="#9fb2c9" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity=".85">
+          <path d="M144 177l46-33 61 8 35 33-13 47 27 31-15 44-57 16-34-27-43 8-38-31 14-45-25-24 42-27z"/>
+          <path d="M298 136l57-35 73 18 32 54-18 48 34 42-30 55-65 18-43-42-48 4-28-45 26-46-21-28 31-43z"/>
+          <path d="M427 342l55-18 45 28 13 62-34 67-49-17-24-55-39-24 33-43z"/>
+          <path d="M548 160l64-44 92 22 52 50-32 49 45 38-16 55-76 15-54-32-63 12-52-46 16-58-33-28 57-33z"/>
+          <path d="M701 365l58-20 50 24 18 45-37 38-64-4-42-35 17-48z"/>
+          <path d="M570 87l38-24 49 11 19 29-33 19-55-6-18-29z"/>
+        </g>
+        <g fill="#2563eb">
+          <circle cx="618" cy="280" r="7"/><circle cx="676" cy="242" r="7"/><circle cx="430" cy="205" r="7"/><circle cx="230" cy="274" r="7"/>
+        </g>
+      </svg>
+      <div class="map-caption">
+        <div class="map-title">Civic event map<span>Default visual until a location is selected</span></div>
+        <div class="map-pin">Kuala Lumpur</div>
+      </div>
+    </div>
+    <div class="preview-actions">
+      <button class="btn">Change map region</button>
+      <button class="btn">Upload cover later</button>
+    </div>
+  </aside>
+
+  <section class="panel form">
+    <div class="form-head">
+      <div>
+        <div class="crumb">Events / Create</div>
+        <h1 class="title">Create Event</h1>
+        <p class="subtitle">Set up an NGO event without asking attendees to repeat profile basics. Calendar creation is prepared as a confirmable Google Calendar action.</p>
+      </div>
+      <span class="calendar-chip">Personal Calendar</span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Event Details</div>
+      <div class="field">
+        <label for="eventTitle">Event name</label>
+        <input id="eventTitle" value="Youth Digital Safety Roundtable 2026">
+      </div>
+      <div class="field-grid">
+        <div class="field"><label for="hostOrg">Host organisation</label><input id="hostOrg" value="Pocket of Pink"></div>
+        <div class="field"><label for="format">Format</label><select id="format"><option>Hybrid</option><option>Physical</option><option>Virtual</option></select></div>
+      </div>
+      <div class="field"><label for="description">Description</label><textarea id="description">A roundtable for youth advocates, NGOs, researchers, and CSR partners working on digital safety and gender equality.</textarea></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">When and Where</div>
+      <div class="time-card">
+        <div class="field"><label for="startDate">Start date</label><input id="startDate" value="Sat 16 May"></div>
+        <div class="field"><label for="startTime">Time</label><input id="startTime" value="16:00 - 17:00"></div>
+        <div class="field"><label for="timezone">Timezone</label><input id="timezone" value="GMT+08:00"></div>
+      </div>
+      <div class="field"><label for="location">Location</label><input id="location" placeholder="Add venue or virtual link" value="Kuala Lumpur"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Event Options</div>
+      <div class="option-list">
+        <div class="option-row"><div class="option-icon">T</div><div class="option-body"><div class="option-name">Ticket price</div><div class="option-note">Keep civic convenings accessible by default</div></div><div class="option-value">Free</div></div>
+        <div class="option-row"><div class="option-icon">A</div><div class="option-body"><div class="option-name">Require approval</div><div class="option-note">Review attendees before confirming if needed</div></div><div class="toggle"><span class="knob"></span></div></div>
+        <div class="option-row"><div class="option-icon">C</div><div class="option-body"><div class="option-name">Capacity</div><div class="option-note">Limit seats for workshops or clinics</div></div><div class="option-value">80</div></div>
+      </div>
+    </div>
+
+    <div class="section" id="calendar">
+      <div class="section-title">Google Calendar Plug-in</div>
+      <div class="calendar-box">
+        <div class="calendar-head">
+          <div class="calendar-title"><span class="gcal">G</span>Calendar draft</div>
+          <span class="tag">Confirmation required</span>
+        </div>
+        <p>Creates a Google Calendar draft using the event title, time, timezone, location, description, and public event URL. Guests can be added from existing Carta profiles after the organiser confirms.</p>
+        <div class="calendar-actions">
+          <button class="btn" onclick="showToast('Google Calendar payload ready','Title, time, timezone, location, description, and event URL are ready to send to Google Calendar after confirmation.')">Preview payload</button>
+          <button class="btn" onclick="showToast('Google Calendar connector stub','This demo keeps the connector open for OAuth or a Google Calendar plug-in. No live calendar event was created.')">Connect Google Calendar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="questions">
+      <div class="section-title">Registration Questions</div>
+      <div class="question-grid">
+        <div class="q-card"><strong>Name</strong><span>From profile</span></div>
+        <div class="q-card"><strong>Email</strong><span>From profile</span></div>
+        <div class="q-card off"><strong>Mobile</strong><span>Off</span></div>
+        <div class="q-card"><strong>Relationship intent</strong><span>Event-specific</span></div>
+        <div class="q-card"><strong>Accessibility needs</strong><span>Optional</span></div>
+        <div class="q-card off"><strong>Web3 identity</strong><span>Off</span></div>
+      </div>
+      <div class="custom-q">
+        <input value="Which relationship are you hoping to build at this event?">
+        <button class="btn">Add Question</button>
+      </div>
+    </div>
+
+    <div class="footer-actions">
+      <button class="btn">Save Draft</button>
+      <button class="btn green" onclick="showToast('Tautai action plan','I will create the event draft, prepare the Google Calendar payload, and ask for confirmation before sending anything to Calendar.')">Ask Tautai</button>
+      <button class="btn primary" onclick="createCartaEvent()">Create Event</button>
+    </div>
+  </section>
+</div>
+</main>
+</div>
+
+<div class="toast" id="toast"><strong id="toastTitle"></strong><span id="toastBody"></span></div>
+
+<script>
+function showToast(title, body){
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastBody').textContent = body;
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 4200);
+}
+function createCartaEvent(){
+  const payload = {
+    title: document.getElementById('eventTitle').value,
+    hostOrganisation: document.getElementById('hostOrg').value,
+    startsAt: '2026-05-16T16:00:00+08:00',
+    endsAt: '2026-05-16T17:00:00+08:00',
+    timezone: 'Asia/Kuala_Lumpur',
+    location: document.getElementById('location').value,
+    calendarProvider: 'google_calendar',
+    registrationProfileReuse: true,
+    eventSpecificQuestions: [
+      'Which relationship are you hoping to build at this event?',
+      'Any accessibility needs?'
+    ],
+    status: 'draft_ready_for_calendar_confirmation'
+  };
+  console.log('Carta event draft', payload);
+  showToast('Event draft created', 'Calendar payload is ready. Tautai or the Google Calendar plug-in should ask for confirmation before creating the calendar event.');
+}
+</script>
+</body>
+</html>
