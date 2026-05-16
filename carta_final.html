@@ -670,28 +670,40 @@ textarea{resize:vertical;min-height:80px}
         <span>Create an event →</span>
       </a>
     </div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">
+        <div>
+          <div class="st" style="margin:0">Created events</div>
+          <div style="font-size:11px;color:var(--muted2)">Live events created from the event builder, with public registration links.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="renderCreatedEvents()">Refresh</button>
+      </div>
+      <div id="createdEventsList"></div>
+    </div>
     <div class="g4" style="margin-bottom:14px">
-      <div class="stat"><div class="stat-label">Registrants</div><div class="stat-value" style="color:var(--blue)">47</div></div>
-      <div class="stat"><div class="stat-label">Organisations</div><div class="stat-value" style="color:var(--violet)">6</div></div>
-      <div class="stat"><div class="stat-label">Top intent</div><div class="stat-value" style="color:var(--amber);font-size:18px">Internship</div></div>
+      <div class="stat"><div class="stat-label">Registrants</div><div class="stat-value" style="color:var(--blue)" id="eventRegistrantCount">—</div></div>
+      <div class="stat"><div class="stat-label">Organisations</div><div class="stat-value" style="color:var(--violet)" id="eventOrganisationCount">—</div></div>
+      <div class="stat"><div class="stat-label">Top intent</div><div class="stat-value" style="color:var(--amber);font-size:18px" id="eventTopIntent">—</div></div>
       <div class="stat"><div class="stat-label">Matches found</div><div class="stat-value" style="color:var(--sky)" id="eventMatchCount">0</div></div>
     </div>
     <div class="g2">
       <div class="card"><div class="st">Attendees</div>
-        <div class="row"><div style="width:32px;height:32px;border-radius:8px;background:#fff1f2;color:var(--rose);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">YH</div><div class="row-body"><div class="row-name">Yee Hui Tan</div><div class="row-meta">Student · Seeking: internship, mentorship</div></div><span class="tag t-green">enriched</span></div>
-        <div class="row"><div style="width:32px;height:32px;border-radius:8px;background:var(--blue4);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">AI</div><div class="row-body"><div class="row-name">Aina</div><div class="row-meta">Programme Manager · Seeking: interns, CSR</div></div><span class="tag t-green">enriched</span></div>
-        <div class="row"><div style="width:32px;height:32px;border-radius:8px;background:#f0f9ff;color:var(--sky);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">DL</div><div class="row-body"><div class="row-name">Daniel Lim</div><div class="row-meta">CSR Manager · Offering: funding, tech</div></div><span class="tag t-green">enriched</span></div>
-        <div class="row"><div style="width:32px;height:32px;border-radius:8px;background:#f5f3ff;color:var(--violet);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">NA</div><div class="row-body"><div class="row-name">Nadia Ahmad</div><div class="row-meta">Youth Civic Lab · Seeking: campaign collabs</div></div><span class="tag t-green">enriched</span></div>
+        <div id="registrantDbList"></div>
       </div>
       <div class="card"><div class="st">Breakdown</div>
-        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
-          <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>Internship seeking</span><span style="color:var(--amber);font-weight:500">22</span></div><div class="progress"><div class="progress-fill" style="width:70%;background:var(--amber)"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>Collaboration</span><span style="color:var(--violet);font-weight:500">18</span></div><div class="progress"><div class="progress-fill" style="width:56%;background:var(--violet)"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>Funding seeking</span><span style="color:var(--blue);font-weight:500">9</span></div><div class="progress"><div class="progress-fill" style="width:28%;background:var(--blue)"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>CSR offering</span><span style="color:var(--sky);font-weight:500">4</span></div><div class="progress"><div class="progress-fill" style="width:13%;background:var(--sky)"></div></div></div>
-        </div>
-        <div class="ai-box"><div class="ai-label">✦ Gemini insight</div><p>Funding demand exceeds funder presence 3:1. Recommend inviting additional funders to next event.</p></div>
+        <div id="registrantBreakdown" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px"></div>
+        <div class="ai-box"><div class="ai-label">✦ AI event insight</div><p id="registrantInsight">Registrant summaries will appear as people complete onboarding.</p></div>
       </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">
+        <div>
+          <div class="st" style="margin:0">Registrant database</div>
+          <div style="font-size:11px;color:var(--muted2)">Built from account profile and onboarding entries. Live writes use Firebase Auth + Firestore when configured.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="renderRegistrantDatabase()">Refresh</button>
+      </div>
+      <div id="registrantTable"></div>
     </div>
   </div>
 </div>
@@ -723,22 +735,20 @@ textarea{resize:vertical;min-height:80px}
 
 <!-- REGISTRY -->
 <div id="page-registry" class="page">
-  <div class="ph"><h2>Relationship registry</h2><p>Every linkage as a first-class, reusable entity</p></div>
+  <div class="ph"><h2>Registrant database</h2><p>Ranked people and organisations by semantic relevance to your Carta profile</p></div>
   <div class="pb">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><span style="font-size:12px;color:var(--muted)" id="regCount">0 linkages</span><button class="btn btn-ghost btn-sm" onclick="exportReg()">Export JSON</button></div>
-    <div id="regList"><div style="text-align:center;padding:48px;color:var(--muted2);font-size:13px">Approve matches to create linkage objects.</div></div>
-    <div class="div"></div>
-    <div class="st">Schema</div>
-    <div class="json-block">{
-  <span class="jk">"id"</span>: <span class="js">"R-001"</span>,
-  <span class="jk">"type"</span>: <span class="js">"internship_match"</span>,
-  <span class="jk">"source"</span>: <span class="js">"Yee Hui Tan"</span>,
-  <span class="jk">"target"</span>: <span class="js">"HerVoice Malaysia"</span>,
-  <span class="jk">"confidence"</span>: <span class="jn">0.91</span>,
-  <span class="jk">"status"</span>: <span class="js">"approved"</span>,
-  <span class="jk">"explanation"</span>: <span class="js">"Yee Hui seeks internship; Aina looking for interns."</span>,
-  <span class="jk">"created_at"</span>: <span class="js">"2026-05-17T09:00:00Z"</span>
-}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px">
+      <span style="font-size:12px;color:var(--muted)" id="regCount">0 registrants ranked</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="updateRegUI()">Refresh ranking</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportReg()">Export ranked JSON</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="st">Ranking basis</div>
+      <div id="registryViewerProfile" class="ai-box"><div class="ai-label">Semantic reference profile</div><p>Loading profile context…</p></div>
+    </div>
+    <div id="regList"><div style="text-align:center;padding:48px;color:var(--muted2);font-size:13px">Registrant matches will appear here.</div></div>
   </div>
 </div>
 
@@ -816,7 +826,7 @@ textarea{resize:vertical;min-height:80px}
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, query, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
   // Replace with your actual Firebase Project config!
   const firebaseConfig = {
@@ -842,6 +852,16 @@ textarea{resize:vertical;min-height:80px}
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     if(name) await updateProfile(credential.user, { displayName: name });
     await sendEmailVerification(credential.user);
+    await setDoc(doc(db, "users", credential.user.uid), {
+      uid: credential.user.uid,
+      email,
+      displayName: name,
+      accountType: "pending",
+      onboardingCompleted: false,
+      emailVerified: credential.user.emailVerified,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
     return credential;
   };
   window.cartaLoginEmail = async ({email,password}) => {
@@ -855,6 +875,30 @@ textarea{resize:vertical;min-height:80px}
   window.cartaFirebaseLogout = async () => {
     if(!firebaseConfigured || !auth.currentUser) return;
     return signOut(auth);
+  };
+  window.cartaUpsertUserProfile = async (profile) => {
+    if(!firebaseConfigured || !auth.currentUser) return { demo: true };
+    await setDoc(doc(db, "users", auth.currentUser.uid), {
+      uid: auth.currentUser.uid,
+      email: auth.currentUser.email || profile.email || "",
+      displayName: profile.displayName || profile.name || profile.organisationName || auth.currentUser.displayName || "",
+      accountType: profile.accountType || profile.type || "individual",
+      onboardingCompleted: !!profile.onboardingCompleted,
+      emailVerified: auth.currentUser.emailVerified,
+      profile,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    return { live: true };
+  };
+  window.cartaSaveEventRegistration = async (registrant) => {
+    if(!firebaseConfigured || !auth.currentUser) return { demo: true };
+    const docRef = await addDoc(collection(db, "events", "event_001", "registrations"), {
+      ...registrant,
+      uid: auth.currentUser.uid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    return { live: true, id: docRef.id };
   };
   window.signOutUser = () => window.logoutCarta?.();
 
@@ -1012,19 +1056,43 @@ async function approveMatch(src,tgt,type,conf,idx){
   showToast(`Linkage created`,`${src} ↔ ${tgt}`);
 }
 window.updateRegUI = function(){
-  const n=window.registry.length;
+  const ranked=rankRegistrantsForViewer();
+  const n=ranked.length;
   document.getElementById('regBadge').textContent=n;
-  document.getElementById('regCount').textContent=`${n} linkage${n!==1?'s':''}`;
+  document.getElementById('regCount').textContent=`${n} registrant${n!==1?'s':''} ranked`;
   document.getElementById('linkCount').textContent=n;
   document.getElementById('eventMatchCount').textContent=n;
+  renderRegistryViewer();
   const list=document.getElementById('regList');
-  if(!window.registry.length) { list.innerHTML=`<div style="text-align:center;padding:48px;color:var(--muted2);font-size:13px">Approve matches to create linkage objects.</div>`; return; }
-  list.innerHTML=window.registry.map(r=>`<div class="reg-row"><div class="reg-id" style="font-size:8px">${r.id.substring(0,4)}</div><div class="reg-body"><div class="reg-name">${r.source_name} ↔ ${r.target_name} <span class="tag t-green" style="font-size:10px">${r.status}</span></div><div class="reg-meta">${(r.type||'').replace(/_/g,' ')} · ${(parseFloat(r.confidence)*100).toFixed(0)}% · ${new Date(r.created_at).toLocaleTimeString()}</div></div></div>`).join('')+`<div class="div"></div><div style="font-size:11px;color:var(--muted2);margin-bottom:6px">// Live JSON</div><div class="json-block">${JSON.stringify(window.registry,null,2)}</div>`;
+  if(!ranked.length) { list.innerHTML=`<div style="text-align:center;padding:48px;color:var(--muted2);font-size:13px">No registrants available yet.</div>`; return; }
+  list.innerHTML=ranked.map((match,idx)=>{
+    const r=match.registrant;
+    const cls=match.score>=80?'sr-hi':match.score>=60?'sr-md':'sr-lo';
+    return `<div class="match-card">
+      <div class="match-header">
+        <div class="score-ring ${cls}">${match.score}%</div>
+        <div style="flex:1">
+          <div class="match-org">${escapeHtml(r.name)} <span class="tag ${r.kind==='organisation'?'t-violet':'t-blue'}" style="font-size:10px">${escapeHtml(r.kind)}</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(r.role||'Participant')} · ${escapeHtml(r.organisation||'-')} · ${escapeHtml(r.location||'Malaysia')}</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted2);font-weight:700">#${idx+1}</div>
+      </div>
+      <div class="ai-box" style="margin-bottom:10px">
+        <div class="ai-label">Relevance capacity</div>
+        <p>${escapeHtml(match.capacity)}</p>
+      </div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">${escapeHtml(r.summary||'No AI summary yet.')}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">${match.reasons.map(reason=>`<span class="tag t-green">${escapeHtml(reason)}</span>`).join('') || '<span class="tag t-gray">semantic profile match</span>'}</div>
+      <div class="match-actions"><button class="btn btn-blue btn-sm" onclick="approveMatch('${escapeHtml(getViewerProfile().name).replace(/'/g,"\\'")}','${escapeHtml(r.name).replace(/'/g,"\\'")}','${match.type}',${match.score},'registry-${idx}')">Create linkage</button><button class="btn btn-ghost btn-sm" onclick="showToast('Why this match','${escapeHtml(match.explanation).replace(/'/g,"\\'")}')">Why?</button></div>
+    </div>`;
+  }).join('');
 }
 function exportReg(){
-  if(!window.registry.length){showToast('Nothing to export','Add linkages first');return;}
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(window.registry,null,2)],{type:'application/json'}));a.download='carta_registry.json';a.click();
-  showToast('Exported ✓',`${window.registry.length} objects`);
+  const ranked=rankRegistrantsForViewer();
+  if(!ranked.length){showToast('Nothing to export','No registrants available');return;}
+  const payload=ranked.map(item=>({score:item.score,type:item.type,capacity:item.capacity,reasons:item.reasons,registrant:item.registrant}));
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));a.download='carta_registrant_rankings.json';a.click();
+  showToast('Exported ✓',`${ranked.length} ranked registrants`);
 }
 
 // ── MAP ──
@@ -1136,7 +1204,26 @@ const individualSeeking=['Internship','Mentorship','Funding','CSR partners','NGO
 const individualOffering=['Research support','Content creation','Community organising','Event support','Funding','Mentorship','Internship opportunities','Technical tools','Training/facilitation','Advocacy/campaign support','Local knowledge / community access','Other'];
 const orgSeeking=['Funding','CSR partnerships','Interns','Volunteers','Mentors / expert advisors','Research collaborators','Campaign partners','Local implementing partners','Event co-hosts','Grant applicants / grantees','General network expansion'];
 const orgOffering=['Funding','Internship openings','Volunteer placements','Training','Community access','Research/data','Campaign collaboration','Venue/event partnership','Technical tools','Mentorship','Other'];
+const seedRegistrants=[
+  {id:'seed_yh',kind:'individual',name:'Yee Hui Tan',role:'Student',organisation:'-',location:'Kuala Lumpur, Malaysia',interests:['Gender equality','Digital rights / online safety'],seeking:['Internship','Mentorship'],offering:['Research support','Content creation'],summary:'Yee Hui is an emerging gender equality advocate seeking internships and mentorship in youth digital safety work.',organisationSummary:'No affiliated organisation yet.',source:'seed'},
+  {id:'seed_aina',kind:'individual',name:'Aina Rahman',role:'Programme manager',organisation:'HerVoice Malaysia',location:'Selangor, Malaysia',interests:['Gender equality','Youth empowerment','Digital rights / online safety'],seeking:['Interns','CSR partnerships','Funding'],offering:['Training','Community access','Campaign collaboration'],summary:'Aina manages women and youth advocacy programmes and is looking for interns, CSR partners, and collaborators around online safety.',organisationSummary:'HerVoice Malaysia works on gender equality, youth advocacy, and digital safety, offering community access and campaign collaboration.',source:'seed'},
+  {id:'seed_daniel',kind:'individual',name:'Daniel Lim',role:'CSR / corporate representative',organisation:'Telco Foundation Malaysia',location:'Kuala Lumpur, Malaysia',interests:['Digital rights / online safety','Education','Civic technology'],seeking:['NGO collaborators','General networking'],offering:['Funding','Technical tools','Mentorship'],summary:'Daniel represents a CSR funder looking for NGO partners in youth digital inclusion and online safety.',organisationSummary:'Telco Foundation Malaysia funds youth education, digital inclusion, and civic technology initiatives.',source:'seed'},
+  {id:'seed_borneo',kind:'organisation',name:'Borneo Digital Access Network',role:'NGO / CSO',organisation:'Borneo Digital Access Network',location:'Sabah, Malaysia',interests:['Digital rights / online safety','Education','Community development'],seeking:['Funding','CSR partnerships','Local implementing partners'],offering:['Local knowledge / community access','Research/data','Event support'],summary:'Borneo Digital Access Network is a Sabah-based organisation seeking funders and partners for digital inclusion work.',organisationSummary:'The organisation connects underserved communities with digital access programmes and can offer local knowledge, community access, and implementation capacity.',source:'seed'}
+];
 let pendingAccountType=null;
+function captureReturnTo(){
+  const value=new URLSearchParams(location.search).get('returnTo');
+  if(value){
+    try{sessionStorage.setItem('cartaReturnTo',value);}catch{}
+    history.replaceState(null,'',location.pathname + location.hash);
+  }
+}
+function getReturnTo(){
+  try{return sessionStorage.getItem('cartaReturnTo')||'';}catch{return '';}
+}
+function clearReturnTo(){
+  try{sessionStorage.removeItem('cartaReturnTo');}catch{}
+}
 
 function renderCheckGroup(group,items){
   document.querySelectorAll(`[data-group="${group}"]`).forEach(el=>{
@@ -1184,6 +1271,193 @@ function storeProfile(key,value){
 }
 function getStoredProfile(key){
   try{return JSON.parse(sessionStorage.getItem(key)||'{}');}catch{return {};}
+}
+function getLocalRegistrants(){
+  try{return JSON.parse(localStorage.getItem('cartaRegistrants')||'[]');}catch{return [];}
+}
+function saveLocalRegistrant(registrant){
+  try{
+    const existing=getLocalRegistrants().filter(item=>item.id!==registrant.id);
+    localStorage.setItem('cartaRegistrants',JSON.stringify([...existing,registrant]));
+  }catch{}
+}
+function allRegistrants(){
+  return [...seedRegistrants,...getLocalRegistrants()];
+}
+function getCreatedEvents(){
+  try{return JSON.parse(localStorage.getItem('cartaEvents')||'[]');}catch{return [];}
+}
+function renderCreatedEvents(){
+  const target=document.getElementById('createdEventsList');
+  if(!target) return;
+  const events=getCreatedEvents();
+  if(!events.length){
+    target.innerHTML='<div style="padding:18px;border:1px dashed var(--border);border-radius:var(--r);color:var(--muted);font-size:12px">No created events yet. Use the event builder to publish a public registration page.</div>';
+    return;
+  }
+  target.innerHTML=events.slice(0,5).map(event=>`<div class="row"><div style="width:32px;height:32px;border-radius:8px;background:var(--blue4);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">□</div><div class="row-body"><div class="row-name">${escapeHtml(event.title)}</div><div class="row-meta">${escapeHtml(event.startsAt||'Date pending')} · ${escapeHtml(event.location||'Location pending')} · ${escapeHtml(event.status||'draft')}</div></div><a class="btn btn-sm btn-ghost" href="${escapeHtml(event.publicUrl||`event-create.html?public=${event.id}`)}">Public page</a></div>`).join('');
+}
+function initials(name){
+  return (name||'?').split(' ').filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase()||'?';
+}
+function escapeHtml(value){
+  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function topItems(registrants,field){
+  const counts={};
+  registrants.forEach(item=>(item[field]||[]).forEach(value=>{counts[value]=(counts[value]||0)+1;}));
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,4);
+}
+function wordsFrom(value){
+  return String(value||'').toLowerCase().replace(/[^a-z0-9\s/]+/g,' ').split(/\s+/).filter(word=>word.length>2);
+}
+function unique(values){
+  return [...new Set((values||[]).filter(Boolean))];
+}
+function normalizeSignal(value){
+  const s=String(value||'').toLowerCase();
+  if(/intern/.test(s)) return 'internship';
+  if(/mentor|advisor/.test(s)) return 'mentorship';
+  if(/csr|corporate/.test(s)) return 'csr partnership';
+  if(/fund|grant/.test(s)) return 'funding';
+  if(/collab|partner|co-host|implementing/.test(s)) return 'collaboration';
+  if(/volunteer/.test(s)) return 'volunteering';
+  if(/research|data/.test(s)) return 'research';
+  if(/campaign|movement/.test(s)) return 'movement-building';
+  if(/digital|online|tech/.test(s)) return 'digital safety / civic technology';
+  if(/gender|women/.test(s)) return 'gender equality';
+  if(/youth|student/.test(s)) return 'youth empowerment';
+  return s.trim();
+}
+function overlap(a,b){
+  const set=new Set((b||[]).map(normalizeSignal));
+  return unique((a||[]).map(normalizeSignal).filter(v=>set.has(v)));
+}
+function getViewerProfile(){
+  const profile=getStoredProfile('cartaProfile');
+  if(profile.displayName||profile.organisationName){
+    return {
+      name:profile.displayName||profile.organisationName,
+      kind:profile.type||profile.accountType||'individual',
+      role:profile.role||profile.organisationType||'Carta user',
+      interests:profile.interests||profile.focus||[],
+      seeking:profile.seeking||[],
+      offering:profile.offering||[],
+      summary:profile.summary||profile.aiContext||'',
+      organisation:profile.organisationName||'-'
+    };
+  }
+  const demo=seedRegistrants[0];
+  return {name:demo.name,kind:demo.kind,role:demo.role,interests:demo.interests,seeking:demo.seeking,offering:demo.offering,summary:demo.summary,organisation:demo.organisation};
+}
+function inferMatchType(viewer,candidate,directNeeds,sharedInterests,reverseNeeds){
+  const joined=[...directNeeds,...sharedInterests,...reverseNeeds,...(candidate.seeking||[]),...(candidate.offering||[])].join(' ').toLowerCase();
+  if(/intern/.test(joined)) return 'internship_match';
+  if(/csr|funding|funder|grant/.test(joined)) return 'funding_or_csr_match';
+  if(/mentor/.test(joined)) return 'mentorship_match';
+  if(/research/.test(joined)) return 'research_collaboration';
+  if(/volunteer/.test(joined)) return 'volunteer_match';
+  if(/campaign|movement/.test(joined)) return 'movement_building';
+  return 'collaboration_match';
+}
+function scoreRegistrant(viewer,candidate){
+  const directNeeds=overlap(viewer.seeking,candidate.offering);
+  const reverseNeeds=overlap(candidate.seeking,viewer.offering);
+  const sharedInterests=overlap(viewer.interests,candidate.interests);
+  const viewerWords=wordsFrom([viewer.summary,...viewer.interests,...viewer.seeking,...viewer.offering].join(' '));
+  const candidateWords=wordsFrom([candidate.summary,candidate.organisationSummary,candidate.aiContext,...(candidate.interests||[]),...(candidate.seeking||[]),...(candidate.offering||[])].join(' '));
+  const sharedWords=unique(viewerWords.filter(word=>candidateWords.includes(word))).slice(0,6);
+  let score=35;
+  score+=directNeeds.length*18;
+  score+=reverseNeeds.length*12;
+  score+=sharedInterests.length*10;
+  score+=Math.min(sharedWords.length*3,15);
+  if(candidate.kind==='organisation' && viewer.seeking?.some(v=>/funding|csr|collaborator|volunteer|intern/i.test(v))) score+=6;
+  if(candidate.name===viewer.name) score=0;
+  score=Math.max(0,Math.min(96,Math.round(score)));
+  const type=inferMatchType(viewer,candidate,directNeeds,sharedInterests,reverseNeeds);
+  const reasons=[
+    ...directNeeds.slice(0,2).map(v=>`offers ${v}`),
+    ...sharedInterests.slice(0,2).map(v=>`shared ${v}`),
+    ...reverseNeeds.slice(0,1).map(v=>`seeks your ${v}`)
+  ];
+  const capacity=directNeeds.length
+    ? `${candidate.name} is relevant as a ${type.replace(/_/g,' ')} because they can offer ${directNeeds.slice(0,3).join(', ')} while your profile is seeking that support.`
+    : sharedInterests.length
+      ? `${candidate.name} is relevant for collaboration or networking around ${sharedInterests.slice(0,3).join(', ')}.`
+      : `${candidate.name} has adjacent civic profile signals that may be useful for broader ecosystem networking.`;
+  const explanation=`Score combines complementary seeking/offering tags, shared issue interests, and overlapping profile language. Strongest signals: ${reasons.join('; ')||sharedWords.join(', ')||'general civic adjacency'}.`;
+  return {registrant:candidate,score,type,capacity,explanation,reasons};
+}
+function rankRegistrantsForViewer(){
+  const viewer=getViewerProfile();
+  return allRegistrants()
+    .map(candidate=>scoreRegistrant(viewer,candidate))
+    .filter(item=>item.score>0)
+    .sort((a,b)=>b.score-a.score);
+}
+function renderRegistryViewer(){
+  const el=document.getElementById('registryViewerProfile');
+  if(!el) return;
+  const viewer=getViewerProfile();
+  el.innerHTML=`<div class="ai-label">Semantic reference profile</div><p><strong>${escapeHtml(viewer.name)}</strong> · ${escapeHtml(viewer.role)} · seeking ${(viewer.seeking||[]).slice(0,4).map(escapeHtml).join(', ')||'general networking'} · interested in ${(viewer.interests||[]).slice(0,4).map(escapeHtml).join(', ')||'civic collaboration'}.</p>`;
+}
+async function generateProfileSummary(profile){
+  const fallback=profile.type==='organisation'
+    ? {summary:`${profile.organisationName} is a ${profile.organisationType||'civil society organisation'} based in ${profile.location?.state||profile.location?.city||'Malaysia'} focused on ${(profile.focus||[]).slice(0,3).join(', ')||'civic work'}. It is seeking ${(profile.seeking||[]).slice(0,3).join(', ')||'ecosystem connections'}.`,organisationSummary:`${profile.organisationName} can offer ${(profile.offering||[]).slice(0,3).join(', ')||'community knowledge and collaboration capacity'} to the civic ecosystem.`}
+    : {summary:`${profile.displayName} is a ${profile.role||'participant'} based in ${profile.location?.city||'Malaysia'} interested in ${(profile.interests||[]).slice(0,3).join(', ')||'civic collaboration'}. They are seeking ${(profile.seeking||[]).slice(0,3).join(', ')||'relevant connections'}.`,organisationSummary:profile.organisationName?`${profile.organisationName} is connected to ${profile.displayName}'s civic profile and may be relevant for event networking.`:'No affiliated organisation yet.'};
+  try{
+    const sys='Return ONLY JSON: {"summary":"one concise participant or representative summary","organisationSummary":"one concise organisation summary or affiliation note","tags":["short tag"]}. Be grounded only in supplied fields.';
+    const res=await callGroq(sys,`Profile: ${JSON.stringify(profile)}`,0.2);
+    return {summary:res.summary||fallback.summary,organisationSummary:res.organisationSummary||fallback.organisationSummary,tags:res.tags||[]};
+  }catch{return {...fallback,tags:[]};}
+}
+function profileToRegistrant(profile,enrichment){
+  const account=getStoredProfile('cartaAccount');
+  const isOrg=profile.type==='organisation';
+  return {
+    id:`reg_${Date.now()}`,
+    kind:profile.type,
+    uid:account.uid||'demo_user',
+    name:isOrg ? profile.organisationName : profile.displayName,
+    role:isOrg ? profile.organisationType : profile.role,
+    organisation:isOrg ? profile.organisationName : (profile.organisationName||'-'),
+    location:[profile.location?.city,profile.location?.state,profile.location?.country].filter(Boolean).join(', '),
+    interests:isOrg ? profile.focus : profile.interests,
+    seeking:profile.seeking||[],
+    offering:profile.offering||[],
+    aiContext:profile.aiContext,
+    summary:enrichment.summary,
+    organisationSummary:enrichment.organisationSummary,
+    tags:enrichment.tags||[],
+    source:window.cartaFirebaseConfigured?'firebase-ready':'local-demo',
+    createdAt:new Date().toISOString()
+  };
+}
+function renderRegistrantDatabase(){
+  const registrants=allRegistrants();
+  const list=document.getElementById('registrantDbList');
+  const table=document.getElementById('registrantTable');
+  const count=document.getElementById('eventRegistrantCount');
+  const orgCount=document.getElementById('eventOrganisationCount');
+  const topIntent=document.getElementById('eventTopIntent');
+  const breakdown=document.getElementById('registrantBreakdown');
+  const insight=document.getElementById('registrantInsight');
+  if(!list||!table) return;
+  const orgs=new Set(registrants.map(r=>r.organisation).filter(o=>o&&o!=='-'));
+  const intentCounts=topItems(registrants,'seeking');
+  if(count) count.textContent=registrants.length;
+  if(orgCount) orgCount.textContent=orgs.size;
+  if(topIntent) topIntent.textContent=intentCounts[0]?.[0]||'—';
+  list.innerHTML=registrants.slice(0,6).map(r=>`<div class="row"><div style="width:32px;height:32px;border-radius:8px;background:${r.kind==='organisation'?'#f5f3ff':'#fff1f2'};color:${r.kind==='organisation'?'var(--violet)':'var(--rose)'};display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">${initials(r.name)}</div><div class="row-body"><div class="row-name">${escapeHtml(r.name)}</div><div class="row-meta">${escapeHtml(r.role)} · Seeking: ${escapeHtml((r.seeking||[]).slice(0,2).join(', ')||'general networking')}</div></div><span class="tag t-green">AI summary</span></div>`).join('');
+  breakdown.innerHTML=(intentCounts.length?intentCounts:[['No entries yet',0]]).map(([label,value],idx)=>{
+    const pct=Math.max(8,Math.round((value/Math.max(1,registrants.length))*100));
+    const color=['var(--amber)','var(--violet)','var(--blue)','var(--sky)'][idx%4];
+    return `<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>${escapeHtml(label)}</span><span style="color:${color};font-weight:500">${value}</span></div><div class="progress"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div></div>`;
+  }).join('');
+  const fundingNeed=registrants.filter(r=>(r.seeking||[]).some(v=>/funding|csr/i.test(v))).length;
+  insight.textContent=`${registrants.length} registrants are indexed. ${fundingNeed} show funding or CSR intent; ${orgs.size} organisations are represented. AI summaries are now stored with each new profile entry.`;
+  table.innerHTML=`<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="color:var(--muted2);text-align:left"><th style="padding:8px;border-bottom:1px solid var(--border)">Registrant</th><th style="padding:8px;border-bottom:1px solid var(--border)">Type</th><th style="padding:8px;border-bottom:1px solid var(--border)">Location</th><th style="padding:8px;border-bottom:1px solid var(--border)">Seeking</th><th style="padding:8px;border-bottom:1px solid var(--border)">AI summary</th><th style="padding:8px;border-bottom:1px solid var(--border)">Source</th></tr></thead><tbody>${registrants.map(r=>`<tr><td style="padding:9px;border-bottom:1px solid var(--border)"><strong>${escapeHtml(r.name)}</strong><div style="color:var(--muted2)">${escapeHtml(r.organisation||'-')}</div></td><td style="padding:9px;border-bottom:1px solid var(--border)">${escapeHtml(r.kind)}</td><td style="padding:9px;border-bottom:1px solid var(--border)">${escapeHtml(r.location)}</td><td style="padding:9px;border-bottom:1px solid var(--border)">${escapeHtml((r.seeking||[]).slice(0,3).join(', '))}</td><td style="padding:9px;border-bottom:1px solid var(--border);min-width:260px">${escapeHtml(r.summary)}</td><td style="padding:9px;border-bottom:1px solid var(--border)"><span class="tag ${r.source==='seed'?'t-gray':'t-blue'}">${escapeHtml(r.source)}</span></td></tr>`).join('')}</tbody></table></div>`;
 }
 function handleRegister(event){
   event.preventDefault();
@@ -1250,7 +1524,7 @@ function prefillOnboardingName(name){
 function toggleOrgAffiliation(){
   document.getElementById('indOrgFields').style.display=document.getElementById('indAffiliated').value==='Yes'?'grid':'none';
 }
-function handleOnboardingSubmit(event,type){
+async function handleOnboardingSubmit(event,type){
   event.preventDefault();
   const account=getStoredProfile('cartaAccount');
   let profile;
@@ -1263,9 +1537,16 @@ function handleOnboardingSubmit(event,type){
     if(required.some(id=>!document.getElementById(id).value.trim())) return setAuthError('organisationError','Please complete the required organisation identity and AI context fields.');
     profile={type,organisationName:document.getElementById('orgName').value.trim(),organisationType:document.getElementById('orgType').value,location:{city:document.getElementById('orgCity').value.trim(),state:document.getElementById('orgState').value.trim(),country:document.getElementById('orgCountry').value.trim()},role:document.getElementById('orgRole').value,focus:collectChecked('orgFocus'),seeking:collectChecked('orgSeeking'),offering:collectChecked('orgOffering'),aiContext:document.getElementById('orgContext').value.trim()};
   }
-  storeProfile('cartaProfile',{...account,...profile,onboardingCompleted:true});
+  const enrichment=await generateProfileSummary(profile);
+  const completeProfile={...account,...profile,summary:enrichment.summary,organisationSummary:enrichment.organisationSummary,tags:enrichment.tags,onboardingCompleted:true};
+  const registrant=profileToRegistrant(completeProfile,enrichment);
+  storeProfile('cartaProfile',completeProfile);
+  saveLocalRegistrant(registrant);
+  Promise.resolve(window.cartaUpsertUserProfile?.(completeProfile)).catch(console.error);
+  Promise.resolve(window.cartaSaveEventRegistration?.(registrant)).catch(console.error);
+  renderRegistrantDatabase();
   setAccessMode('logged-in','onboarding');
-  showToast('Onboarding complete','Carta will reuse this profile for event registration and networking recommendations.');
+  showToast('Onboarding complete','AI summaries were added to the registrant database.');
 }
 function logoutCarta(){
   Promise.resolve(window.cartaFirebaseLogout?.()).finally(()=>{
@@ -1315,6 +1596,12 @@ function updateAccessUI(){
 function setAccessMode(mode,source){
   setStoredAccessMode(mode,source);
   updateAccessUI();
+  const returnTo=getReturnTo();
+  if(mode==='logged-in' && returnTo){
+    clearReturnTo();
+    location.href=returnTo;
+    return;
+  }
   location.hash='dashboard';
   goTo('dashboard',null);
   showToast(mode==='guest'?'Guest access enabled':'Signed in','Dashboard opened with '+(mode==='guest'?'guest':'logged-in')+' permissions.');
@@ -1324,6 +1611,7 @@ window.clearAccessMode=clearAccessMode;
 window.logoutCarta=logoutCarta;
 window.updateAccessUI=updateAccessUI;
 window.setAccessMode=setAccessMode;
+captureReturnTo();
 function goTo(id,el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1333,6 +1621,8 @@ function goTo(id,el){
   if(el) el.classList.add('active');
   else{const nav=[...document.querySelectorAll('.nav-item')].find(n=>n.getAttribute('onclick')?.includes(`'${id}'`));if(nav) nav.classList.add('active');}
   if(id==='directory') loadDir();
+  if(id==='registry') updateRegUI();
+  if(id==='event'){renderRegistrantDatabase();renderCreatedEvents();}
 }
 document.querySelectorAll('.nav-item').forEach(item=>item.addEventListener('click',function(){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));this.classList.add('active');}));
 function routeFromHash(){

@@ -89,6 +89,16 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
 .q-card strong{display:block;margin-bottom:3px}.q-card span{font-size:12px;color:var(--muted)}.q-card.off{opacity:.55}
 .custom-q{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:12px}.custom-q .btn{padding:0 14px}
 .footer-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;padding-top:18px;border-top:1px solid var(--border)}
+.created-box{display:none;margin-top:14px;border:1px solid #bbf7d0;background:#ecfdf5;border-radius:var(--r);padding:14px}
+.created-box.show{display:block}.created-box strong{display:block;color:#047857;margin-bottom:5px}.created-box a{color:var(--blue);font-weight:700;word-break:break-all}
+.public-shell{display:none;max-width:900px;margin:0 auto;padding:34px 28px 52px}.public-shell.active{display:block}
+.public-hero{background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow2);overflow:hidden}
+.public-map{height:220px;background:linear-gradient(180deg,#f8fbff,#eef5ff);border-bottom:1px solid var(--border);position:relative;overflow:hidden}.public-map svg{width:100%;height:100%}
+.public-body{padding:26px}.public-kicker{font-size:12px;color:var(--blue);font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.public-title{font-size:42px;line-height:1.02;font-weight:750;letter-spacing:-.045em;margin-bottom:12px}.public-meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.public-meta span{background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:7px 11px;color:var(--muted);font-weight:650}
+.public-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.public-note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:10px}
+.public-register-panel{margin-top:16px;border:1px solid var(--border);background:var(--surface);border-radius:var(--r);padding:16px;display:none}.public-register-panel.show{display:block}
 .toast{position:fixed;right:24px;bottom:24px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow2);max-width:390px;transform:translateY(140%);transition:.2s;z-index:20}
 .toast.show{transform:translateY(0)}.toast strong{display:block;margin-bottom:3px}.toast span{color:var(--muted)}
 @media(max-width:980px){html,body{overflow:auto;height:auto}.app{display:block;height:auto}.sidebar{position:relative}.shell{grid-template-columns:1fr;padding:18px}.field-grid,.time-card,.question-grid,.custom-q{grid-template-columns:1fr}.map-preview{height:290px}.title{font-size:30px}.form-head{flex-direction:column}.footer-actions{flex-direction:column}.footer-actions .btn{width:100%}}
@@ -132,7 +142,38 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
 </aside>
 
 <main class="main">
-<div class="shell">
+<div class="public-shell" id="publicShell">
+  <section class="public-hero">
+    <div class="public-map">
+      <svg viewBox="0 0 900 220" aria-hidden="true">
+        <rect width="900" height="220" fill="#f8fbff"/>
+        <g fill="none" stroke="#9fb2c9" stroke-width="3" stroke-linejoin="round" opacity=".9">
+          <path d="M130 88l58-34 70 14 31 43-24 42-70 15-52-28-13-52z"/>
+          <path d="M362 55l91-25 96 30 21 62-52 47-104-7-65-45 13-62z"/>
+          <path d="M623 73l86-36 95 31 39 53-41 50-111-3-77-41 9-54z"/>
+        </g>
+      </svg>
+    </div>
+    <div class="public-body">
+      <div class="public-kicker" id="publicHost">Carta event</div>
+      <h1 class="public-title" id="publicTitle">Event</h1>
+      <p class="subtitle" id="publicDescription"></p>
+      <div class="public-meta">
+        <span id="publicTime">Time</span>
+        <span id="publicLocation">Location</span>
+        <span id="publicFormat">Format</span>
+      </div>
+      <div class="public-actions">
+        <button class="btn primary" onclick="startPublicRegistration()">Register for event</button>
+        <a class="btn" href="carta_final.html">Open Carta</a>
+      </div>
+      <div class="public-note">New attendees create a Carta account first, then return here to finish the event RSVP using their reusable profile.</div>
+      <div class="public-register-panel" id="publicRegisterPanel"></div>
+    </div>
+  </section>
+</div>
+
+<div class="shell" id="builderShell">
   <aside class="panel map-card">
     <div class="map-preview" aria-label="Default world map outline event image">
       <svg viewBox="0 0 900 560" role="img" aria-label="World map outline">
@@ -243,6 +284,10 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
       <button class="btn green" onclick="showToast('Tautai action plan','I will create the event draft, prepare the Google Calendar payload, and ask for confirmation before sending anything to Calendar.')">Ask Tautai</button>
       <button class="btn primary" onclick="createCartaEvent()">Create Event</button>
     </div>
+    <div class="created-box" id="createdBox">
+      <strong>Event created</strong>
+      <div id="createdDetails"></div>
+    </div>
   </section>
 </div>
 </main>
@@ -258,25 +303,116 @@ function showToast(title, body){
   toast.classList.add('show');
   setTimeout(()=>toast.classList.remove('show'), 4200);
 }
+function safeJsonRead(key,fallback){
+  try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch{return fallback;}
+}
+function safeJsonWrite(key,value){
+  try{localStorage.setItem(key,JSON.stringify(value));}catch{}
+}
+function getEvents(){return safeJsonRead('cartaEvents',[]);}
+function saveEvent(event){
+  const events=getEvents().filter(item=>item.id!==event.id);
+  safeJsonWrite('cartaEvents',[event,...events]);
+}
+function getEventById(id){
+  return getEvents().find(event=>event.id===id) || (id==='event_001'?{
+    id:'event_001',
+    title:'Youth Digital Safety Roundtable 2026',
+    hostOrganisation:'Pocket of Pink',
+    format:'Hybrid',
+    description:'A roundtable for youth advocates, NGOs, researchers, and CSR partners working on digital safety and gender equality.',
+    startsAt:'Sat 16 May, 16:00 - 17:00',
+    timezone:'GMT+08:00',
+    location:'Kuala Lumpur',
+    publicUrl:'event-create.html?public=event_001'
+  }:null);
+}
+function publicUrlFor(eventId){
+  return `${location.origin}${location.pathname}?public=${encodeURIComponent(eventId)}`;
+}
+function getCartaProfile(){
+  try{return JSON.parse(sessionStorage.getItem('cartaProfile')||'{}');}catch{return {};}
+}
+function getCartaAccessMode(){
+  try{return localStorage.getItem('cartaAccessMode');}catch{return null;}
+}
+function saveEventRegistration(eventId,profile){
+  const registrations=safeJsonRead('cartaEventRegistrations',[]);
+  const name=profile.displayName||profile.name||profile.organisationName||'Carta attendee';
+  const registration={
+    id:`evtreg_${Date.now()}`,
+    eventId,
+    name,
+    role:profile.role||profile.organisationType||'Participant',
+    organisation:profile.organisationName||'-',
+    email:profile.email||'',
+    createdAt:new Date().toISOString(),
+    status:'registered_from_public_event'
+  };
+  safeJsonWrite('cartaEventRegistrations',[registration,...registrations.filter(item=>!(item.eventId===eventId&&item.email&&item.email===registration.email))]);
+  return registration;
+}
+function renderPublicEvent(eventId){
+  const event=getEventById(eventId);
+  document.getElementById('builderShell').style.display='none';
+  document.getElementById('publicShell').classList.add('active');
+  if(!event){
+    document.getElementById('publicTitle').textContent='Event not found';
+    document.getElementById('publicDescription').textContent='This event link does not match a saved Carta event on this device.';
+    return;
+  }
+  document.getElementById('publicHost').textContent=event.hostOrganisation||'Carta event';
+  document.getElementById('publicTitle').textContent=event.title;
+  document.getElementById('publicDescription').textContent=event.description||'Register through Carta to reuse your civic profile and receive better event recommendations.';
+  document.getElementById('publicTime').textContent=`${event.startsAt||'Date to be confirmed'} ${event.timezone||''}`.trim();
+  document.getElementById('publicLocation').textContent=event.location||'Location to be confirmed';
+  document.getElementById('publicFormat').textContent=event.format||'Event';
+}
+function startPublicRegistration(){
+  const eventId=new URLSearchParams(location.search).get('public')||'event_001';
+  const profile=getCartaProfile();
+  const panel=document.getElementById('publicRegisterPanel');
+  if(getCartaAccessMode()==='logged-in' && (profile.displayName||profile.organisationName||profile.name)){
+    const reg=saveEventRegistration(eventId,profile);
+    panel.classList.add('show');
+    panel.innerHTML=`<strong>Registration confirmed</strong><p class="public-note">${reg.name} is registered for this event. Carta reused the profile information already collected during signup.</p>`;
+    showToast('Registered for event','Your Carta profile was attached to this event registration.');
+    return;
+  }
+  const returnTo=`${location.pathname}?public=${encodeURIComponent(eventId)}`;
+  location.href=`carta_final.html?returnTo=${encodeURIComponent(returnTo)}`;
+}
 function createCartaEvent(){
+  const id=`event_${Date.now()}`;
   const payload = {
+    id,
     title: document.getElementById('eventTitle').value,
     hostOrganisation: document.getElementById('hostOrg').value,
-    startsAt: '2026-05-16T16:00:00+08:00',
-    endsAt: '2026-05-16T17:00:00+08:00',
-    timezone: 'Asia/Kuala_Lumpur',
+    format: document.getElementById('format').value,
+    startsAt: `${document.getElementById('startDate').value}, ${document.getElementById('startTime').value}`,
+    endsAt: '',
+    timezone: document.getElementById('timezone').value,
     location: document.getElementById('location').value,
+    description: document.getElementById('description').value,
     calendarProvider: 'google_calendar',
     registrationProfileReuse: true,
+    publicUrl: `event-create.html?public=${id}`,
     eventSpecificQuestions: [
       'Which relationship are you hoping to build at this event?',
       'Any accessibility needs?'
     ],
-    status: 'draft_ready_for_calendar_confirmation'
+    status: 'live_public_registration_open',
+    createdAt: new Date().toISOString()
   };
   console.log('Carta event draft', payload);
-  showToast('Event draft created', 'Calendar payload is ready. Tautai or the Google Calendar plug-in should ask for confirmation before creating the calendar event.');
+  saveEvent(payload);
+  const fullUrl=publicUrlFor(id);
+  document.getElementById('createdBox').classList.add('show');
+  document.getElementById('createdDetails').innerHTML=`<p>Public registration is live. Share this event page with attendees:</p><a href="${payload.publicUrl}">${fullUrl}</a><div style="margin-top:10px"><a class="btn" href="${payload.publicUrl}">Open public event page</a></div>`;
+  showToast('Event is live', 'The event was saved locally and public registration is open. Calendar payload remains ready for confirmation.');
 }
+const params=new URLSearchParams(location.search);
+if(params.has('public')) renderPublicEvent(params.get('public'));
 </script>
 </body>
 </html>
