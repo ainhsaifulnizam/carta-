@@ -7,7 +7,7 @@ import { useAuth } from "@/components/AuthProvider";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { loginWithEmail, loginWithGoogle } = useAuth();
+  const { firebaseReady, loginWithEmail, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -34,6 +34,10 @@ export default function LoginPage() {
 
   async function onGoogleLogin() {
     setError("");
+    if (!firebaseReady) {
+      setError("Firebase is not configured yet. Add the NEXT_PUBLIC_FIREBASE_* values to .env.local, restart the dev server, and enable Google sign-in in Firebase Console.");
+      return;
+    }
     setLoading(true);
     try {
       await loginWithGoogle();
@@ -76,6 +80,11 @@ export default function LoginPage() {
         <button className="btn btn-secondary btn-full" disabled={loading} onClick={onGoogleLogin} type="button">
           Continue with Google
         </button>
+        {!firebaseReady ? (
+          <div className="setup-note">
+            Google sign-in needs real Firebase config in <code>.env.local</code> and the Google provider enabled in Firebase Authentication.
+          </div>
+        ) : null}
 
         <div className="auth-footer">
           New to Carta? <Link className="muted-link" href="/register">Create an account</Link>

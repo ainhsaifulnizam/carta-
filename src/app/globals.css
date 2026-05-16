@@ -41,7 +41,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -274,7 +275,9 @@ select {
   margin-bottom: 6px;
 }
 
-.field input {
+.field input,
+.field select,
+.field textarea {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -285,7 +288,15 @@ select {
   width: 100%;
 }
 
-.field input:focus {
+.field textarea {
+  min-height: 110px;
+  padding: 12px;
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
@@ -295,8 +306,13 @@ select {
   gap: 8px;
 }
 
+.two-col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .radio-card,
-.checkbox-row {
+.checkbox-row,
+.checkbox-card {
   align-items: center;
   background: var(--surface-soft);
   border: 1px solid var(--border);
@@ -308,6 +324,34 @@ select {
 
 .checkbox-row {
   align-items: flex-start;
+}
+
+.checkbox-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.questionnaire {
+  display: grid;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.setup-note {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 10px;
+  padding: 11px 12px;
+}
+
+.setup-note code {
+  color: var(--text);
+  font-weight: 700;
 }
 
 .error-box,
@@ -368,6 +412,10 @@ select {
   max-width: 920px;
 }
 
+.dashboard-wrap.wide {
+  max-width: 1080px;
+}
+
 .dashboard-header {
   align-items: center;
   display: flex;
@@ -398,5 +446,9 @@ select {
     align-items: flex-start;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr;
   }
 }

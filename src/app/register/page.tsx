@@ -35,7 +35,7 @@ function validate(form: RegisterForm) {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { registerWithEmail, loginWithGoogle } = useAuth();
+  const { firebaseReady, registerWithEmail, loginWithGoogle } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,9 +67,16 @@ export default function RegisterPage() {
 
   async function onGoogleSignup() {
     setError("");
+    if (!firebaseReady) {
+      setError("Firebase is not configured yet. Add the NEXT_PUBLIC_FIREBASE_* values to .env.local, restart the dev server, and enable Google sign-in in Firebase Console.");
+      return;
+    }
     setLoading(true);
     try {
       await loginWithGoogle(form.accountType);
+      try {
+        sessionStorage.setItem("cartaPendingAccountType", form.accountType);
+      } catch {}
       router.push("/onboarding");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to continue with Google.");
@@ -134,6 +141,11 @@ export default function RegisterPage() {
         <button className="btn btn-secondary btn-full" disabled={loading} onClick={onGoogleSignup} type="button">
           Continue with Google
         </button>
+        {!firebaseReady ? (
+          <div className="setup-note">
+            Google sign-in needs real Firebase config in <code>.env.local</code> and the Google provider enabled in Firebase Authentication.
+          </div>
+        ) : null}
 
         <div className="auth-footer">
           Already have an account? <Link className="muted-link" href="/login">Log in</Link>

@@ -19,7 +19,7 @@ import {
   useMemo,
   useState
 } from "react";
-import { auth, googleProvider } from "@/lib/firebase";
+import { auth, googleProvider, hasFirebaseConfig } from "@/lib/firebase";
 import { AccountType, createUserProfileIfMissing } from "@/lib/users";
 
 type RegisterWithEmailInput = {
@@ -32,6 +32,7 @@ type RegisterWithEmailInput = {
 type AuthContextValue = {
   currentUser: User | null;
   loading: boolean;
+  firebaseReady: boolean;
   registerWithEmail: (input: RegisterWithEmailInput) => Promise<User>;
   loginWithEmail: (email: string, password: string) => Promise<User>;
   loginWithGoogle: (accountType?: AccountType) => Promise<User>;
@@ -40,6 +41,36 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+function requireFirebaseConfig() {
+  if (!hasFirebaseConfig) {
+    throw new Error(
+      "Firebase is not configured yet. Add your NEXT_PUBLIC_FIREBASE_* values to .env.local, restart the dev server, and enable Google sign-in in Firebase Authentication."
+    );
+  }
+}
+
+function friendlyFirebaseError(error: unknown) {
+  const code = typeof error === "object" && error && "code" in error ? String((error as { code?: unknown }).code) : "";
+
+  if (code.includes("operation-not-allowed")) {
+    return new Error("Google sign-in is not enabled yet. In Firebase Console, open Authentication > Sign-in method and enable Google.");
+  }
+
+  if (code.includes("unauthorized-domain")) {
+    return new Error("This localhost/domain is not authorized for Firebase Auth. Add it under Firebase Authentication > Settings > Authorized domains.");
+  }
+
+  if (code.includes("popup-closed-by-user")) {
+    return new Error("Google sign-in was closed before it completed.");
+  }
+
+  if (code.includes("invalid-api-key") || code.includes("api-key-not-valid")) {
+    return new Error("Firebase API key is invalid. Check your NEXT_PUBLIC_FIREBASE_* values in .env.local and restart the dev server.");
+  }
+
+  return error instanceof Error ? error : new Error("Firebase authentication failed.");
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -56,29 +87,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       currentUser,
       loading,
+      firebaseReady: hasFirebaseConfig,
       async registerWithEmail({ displayName, email, password, accountType }) {
-        const credential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(credential.user, { displayName });
-        await createUserProfileIfMissing({
-          user: credential.user,
-          accountType,
-          displayName
-        });
-        await sendEmailVerification(credential.user);
-        return credential.user;
+        requireFirebaseConfig();
+        try {
+          const credential = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(credential.user, { displayName });
+          await createUserProfileIfMissing({
+            user: credential.user,
+            accountType,
+            displayName
+          });
+          await sendEmailVerification(credential.user);
+          return credential.user;
+        } catch (error) {
+          throw friendlyFirebaseError(error);
+        }
       },
       async loginWithEmail(email, password) {
-        const credential = await signInWithEmailAndPassword(auth, email, password);
-        return credential.user;
+        requireFirebaseConfig();
+        try {
+          const credential = await signInWithEmailAndPassword(auth, email, password);
+          return credential.user;
+        } catch (error) {
+          throw friendlyFirebaseError(error);
+        }
       },
       async loginWithGoogle(accountType = "individual") {
-        const credential = await signInWithPopup(auth, googleProvider);
-        await createUserProfileIfMissing({
-          user: credential.user,
-          accountType,
-          displayName: credential.user.displayName
-        });
-        return credential.user;
+        requireFirebaseConfig();
+        try {
+          const credential = await signInWithPopup(auth, googleProvider);
+          await createUserProfileIfMissing({
+            user: credential.user,
+            accountType,
+            displayName: credential.user.displayName
+          });
+          return credential.user;
+        } catch (error) {
+          throw friendlyFirebaseError(error);
+        }
       },
       async logout() {
         await signOut(auth);

@@ -15,6 +15,11 @@ export type AppUser = {
   updatedAt: unknown;
 };
 
+export type UserOnboardingProfile = {
+  accountType: AccountType;
+  profile: Record<string, unknown>;
+};
+
 export type CreateUserProfileInput = {
   user: User;
   accountType: AccountType;
@@ -47,4 +52,26 @@ export async function createUserProfileIfMissing({
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
+}
+
+export async function saveUserOnboardingProfile(
+  user: User,
+  { accountType, profile }: UserOnboardingProfile
+): Promise<void> {
+  const userRef = doc(db, "users", user.uid);
+
+  await setDoc(
+    userRef,
+    {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName ?? null,
+      accountType,
+      onboardingCompleted: true,
+      emailVerified: user.emailVerified,
+      profile,
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
 }
