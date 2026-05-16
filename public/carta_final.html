@@ -9,7 +9,7 @@
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Outfit+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC9Khm8yjBwQQkbQS87XutuZ1Gh3T6PPs8&callback=initMap"></script>
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCiNL-QL5Hbdn2lAZDdDf15TehD-qi2t9g&libraries=marker&v=weekly&loading=async&callback=initMap"></script>
   <style>
     :root {
       --bg: #f4f6fb;
@@ -1034,6 +1034,69 @@
       font-weight: 400
     }
 
+    .carta-pin {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transform: translateY(0);
+      transition: transform .15s ease
+    }
+
+    .carta-pin:hover {
+      transform: translateY(-3px) scale(1.04);
+      z-index: 5
+    }
+
+    .carta-pin-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Outfit', system-ui, sans-serif;
+      letter-spacing: .3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid #fff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, .18), 0 0 0 1px rgba(15, 23, 42, .06);
+      overflow: hidden
+    }
+
+    .carta-pin-badge img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%
+    }
+
+    .carta-pin-label {
+      margin-top: 5px;
+      padding: 3px 8px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, .06)
+    }
+
+    .carta-pin-sub {
+      margin-top: 2px;
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--muted2);
+      text-transform: uppercase;
+      letter-spacing: .5px
+    }
+
     .map-legend {
       position: absolute;
       top: 14px;
@@ -1655,7 +1718,7 @@
       <div class="logo-wrap">
         <a class="logo-word" href="carta_final.html" onclick="event.preventDefault();goTo('dashboard',null)"
           aria-label="Go to Carta dashboard">
-          <img src="assets/logo.png" alt="Carta" class="logo-img">
+          <img src="assets/cartalogo.png" alt="Carta" class="logo-img">
         </a>
         <div class="logo-sub">Ecosystem Relationship Intelligence</div>
       </div>
@@ -2604,12 +2667,10 @@
     const GROQ_HEADERS = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_KEY}` };
 
     // ── CONFIG ──
-    const DIRECT = 'https://openngo.my/api/v1';
+    const DIRECT = '/api/openngo';
 
     async function fetchJSON(url) {
-      try { const r = await fetch(url, { signal: AbortSignal.timeout(2500) }); if (r.ok) return await r.json(); } catch (e) { }
-      try { const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(6000) }); if (r.ok) return await r.json(); } catch (e) { }
-      try { const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(6000) }); if (r.ok) return await r.json(); } catch (e) { }
+      try { const r = await fetch(url, { signal: AbortSignal.timeout(8000) }); if (r.ok) return await r.json(); } catch (e) { }
       return null;
     }
 
@@ -2780,39 +2841,117 @@
     }
 
     let gmap;
-    function initMap() {
-      gmap = new google.maps.Map(document.getElementById('gmap'), {
+    let AdvancedMarker;
+
+    const PIN_PALETTE = {
+      NGO:    '#2563eb',
+      CSR:    '#8b5cf6',
+      Funder: '#8b5cf6',
+      Linked: '#f59e0b',
+      Gap:    '#f43f5e'
+    };
+
+    function pinInitials(name) {
+      const words = String(name).split(/\s+/).filter(Boolean);
+      const letters = words.slice(0, 2).map(w => w[0]).join('');
+      return (letters || '?').toUpperCase();
+    }
+
+    function buildPinContent({ name, type, sub, logoUrl }) {
+      const color = PIN_PALETTE[type] || PIN_PALETTE.NGO;
+      const init = pinInitials(name);
+      const safeName = String(name).replace(/"/g, '&quot;');
+      const badgeInner = logoUrl
+        ? `<img src="${logoUrl}" alt="${safeName}" onerror="this.parentElement.textContent='${init}'">`
+        : init;
+      const el = document.createElement('div');
+      el.className = 'carta-pin';
+      el.innerHTML = `
+        <div class="carta-pin-badge" style="background:${color}">${badgeInner}</div>
+        <div class="carta-pin-label">${name}</div>
+        ${sub ? `<div class="carta-pin-sub">${sub}</div>` : ''}
+      `;
+      return el;
+    }
+
+    function setPinLogo(contentEl, logoUrl, name) {
+      const badge = contentEl?.querySelector('.carta-pin-badge');
+      if (!badge || !logoUrl) return;
+      const init = pinInitials(name);
+      const safeName = String(name).replace(/"/g, '&quot;');
+      badge.innerHTML = `<img src="${logoUrl}" alt="${safeName}" onerror="this.parentElement.textContent='${init}'">`;
+    }
+
+    async function hydratePinLogos(markers) {
+      const data = await fetchJSON(`${DIRECT}/companies?limit=200`);
+      if (!data) return;
+      const items = Array.isArray(data) ? data : (data.results || data.companies || data.data || []);
+      if (!items.length) return;
+      const byName = new Map();
+      items.forEach(it => { if (it?.name) byName.set(it.name.toLowerCase().trim(), it); });
+      markers.forEach(({ marker, title }) => {
+        const key = title.toLowerCase().trim();
+        let match = byName.get(key);
+        if (!match) {
+          const firstWord = key.split(/\s+/)[0];
+          match = items.find(it => it?.name && it.name.toLowerCase().includes(firstWord) && firstWord.length > 3);
+        }
+        if (match?.logo_url) setPinLogo(marker.content, match.logo_url, title);
+      });
+    }
+
+    async function initMap() {
+      const { Map } = await google.maps.importLibrary('maps');
+      const markerLib = await google.maps.importLibrary('marker');
+      AdvancedMarker = markerLib.AdvancedMarkerElement;
+
+      gmap = new Map(document.getElementById('gmap'), {
         center: { lat: 4.2105, lng: 101.9758 }, // Center of Malaysia
         zoom: 6,
         mapTypeControl: false,
-        streetViewControl: false
+        streetViewControl: false,
+        mapId: 'DEMO_MAP_ID'
       });
 
       const initialMarkers = [
-        { title: 'Pocket of Pink', loc: { lat: 3.1073, lng: 101.6067 }, desc: 'NGO · Gender & youth · Petaling Jaya' },
-        { title: 'KL Youth Connect', loc: { lat: 3.1390, lng: 101.6869 }, desc: 'NGO · Mental health · Chow Kit' },
-        { title: 'Youth Civic Lab', loc: { lat: 3.0738, lng: 101.5183 }, desc: 'NGO · Civic tech · Shah Alam' },
-        { title: 'Telco Foundation', loc: { lat: 3.1590, lng: 101.7069 }, desc: 'CSR · Digital inclusion · RM 2M mandate' },
-        { title: 'Borneo Digital Access', loc: { lat: 5.9788, lng: 116.0753 }, desc: 'NGO · Digital inclusion · Sabah' },
-        { title: "Penang Women's Centre", loc: { lat: 5.4141, lng: 100.3288 }, desc: 'NGO · Gender rights · Penang' }
+        { title: 'Pocket of Pink',         type: 'NGO', sub: 'Gender & youth',     loc: { lat: 3.1073, lng: 101.6067 }, desc: 'NGO · Gender & youth · Petaling Jaya' },
+        { title: 'KL Youth Connect',       type: 'NGO', sub: 'Mental health',      loc: { lat: 3.1390, lng: 101.6869 }, desc: 'NGO · Mental health · Chow Kit' },
+        { title: 'Youth Civic Lab',        type: 'NGO', sub: 'Civic tech',         loc: { lat: 3.0738, lng: 101.5183 }, desc: 'NGO · Civic tech · Shah Alam' },
+        { title: 'Telco Foundation',       type: 'CSR', sub: 'Digital inclusion',  loc: { lat: 3.1590, lng: 101.7069 }, desc: 'CSR · Digital inclusion · RM 2M mandate' },
+        { title: 'Borneo Digital Access',  type: 'NGO', sub: 'Digital inclusion',  loc: { lat: 5.9788, lng: 116.0753 }, desc: 'NGO · Digital inclusion · Sabah' },
+        { title: "Penang Women's Centre",  type: 'NGO', sub: 'Gender rights',      loc: { lat: 5.4141, lng: 100.3288 }, desc: 'NGO · Gender rights · Penang' }
       ];
 
-      initialMarkers.forEach(m => {
-        const marker = new google.maps.Marker({ position: m.loc, map: gmap, title: m.title });
-        marker.addListener("click", () => showToast(m.title, m.desc));
+      const createdMarkers = initialMarkers.map(m => {
+        const marker = new AdvancedMarker({
+          position: m.loc,
+          map: gmap,
+          title: m.title,
+          content: buildPinContent({ name: m.title, type: m.type, sub: m.sub })
+        });
+        marker.addListener('gmp-click', () => showToast(m.title, m.desc));
+        return { marker, title: m.title };
       });
 
       // Draws the "Coverage gap" visual as a map circle
       new google.maps.Circle({ strokeColor: "#f43f5e", strokeOpacity: 0.8, strokeWeight: 2, fillColor: "#f43f5e", fillOpacity: 0.15, map: gmap, center: { lat: 3.0567, lng: 101.5854 }, radius: 12000 });
+
+      // Fetch openngo data once and patch real logos onto matching pins (initials stay as fallback)
+      hydratePinLogos(createdMarkers);
     }
 
     function addLinkedPin(name) {
+      if (!AdvancedMarker || !gmap) return;
       const org = ORGS.find(o => o.name === name);
       const coords = getCoords(org?.location || 'KL');
       if (!coords) return;
       const jx = (Math.random() - .5) * 0.1, jy = (Math.random() - .5) * 0.1;
-      // newly matched pins drop as yellow dots
-      new google.maps.Marker({ position: { lat: coords.lat + jy, lng: coords.lng + jx }, map: gmap, title: name, icon: 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png' });
+      new AdvancedMarker({
+        position: { lat: coords.lat + jy, lng: coords.lng + jx },
+        map: gmap,
+        title: name,
+        content: buildPinContent({ name, type: 'Linked', sub: 'New match' })
+      });
       document.getElementById('mapCount').textContent = parseInt(document.getElementById('mapCount').textContent) + 1;
     }
     function mf(type, el) { document.querySelectorAll('.mf-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); showToast(`Filter: ${type}`, ''); }
@@ -2832,8 +2971,8 @@
       list.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:40px;color:var(--muted2)"><div class="spinner"></div><span style="font-size:12px">Loading…</span></div>`;
       const data = await fetchDir();
       if (!data) { renderDirItems(demoNGOs()); showToast('Demo mode', 'openngo.my unreachable'); return; }
-      const items = Array.isArray(data) ? data : (data.results || data.companies || data.data || []);
-      ds.total = data.count || items.length;
+      const items = Array.isArray(data) ? data : (data.data || data.results || data.companies || []);
+      ds.total = (data.meta && data.meta.total) || data.count || items.length;
       renderDirItems(items);
       document.getElementById('actorCount').textContent = ds.total || items.length;
     }
@@ -3418,7 +3557,7 @@
     }
 
     // ── INIT ──
-    (async () => { const d = await fetchJSON(`${DIRECT}/companies?limit=1`); document.getElementById('actorCount').textContent = d ? (d.count || d.total || '100+') : '100+'; })();
+    (async () => { const d = await fetchJSON(`${DIRECT}/companies?limit=1`); document.getElementById('actorCount').textContent = d ? ((d.meta && d.meta.total) || d.count || d.total || '100+') : '100+'; })();
 
 
   </script>
