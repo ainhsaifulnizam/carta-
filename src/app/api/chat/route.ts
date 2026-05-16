@@ -7,14 +7,14 @@ const vertexAI = new VertexAI({
 });
 
 const generativeModel = vertexAI.getGenerativeModel({
-  model: 'gemini-3.1-flash-lite-preview',
+  model: 'gemini-3.1-flash-lite',
 });
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { contents, system_instruction } = body;
-    
+
     if (!contents || !Array.isArray(contents)) {
       return NextResponse.json({ error: 'Contents array is required' }, { status: 400 });
     }
@@ -26,14 +26,14 @@ export async function POST(req: Request) {
     if (system_instruction) {
       request.systemInstruction = system_instruction;
     }
-    
+
     const result = await generativeModel.generateContent(request);
-    
+
     if (result.response.candidates && result.response.candidates.length > 0) {
       const text = result.response.candidates[0].content.parts[0].text;
       return NextResponse.json({ response: text });
     } else {
-       return NextResponse.json({ error: 'No response from AI' }, { status: 500 });
+      return NextResponse.json({ error: 'No response from AI' }, { status: 500 });
     }
 
   } catch (error: any) {
